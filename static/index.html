@@ -120,6 +120,15 @@
       font-weight: bold;
       cursor: pointer;
     }
+    #fugk_table select {
+      color: black;
+      background: white;
+    }
+    
+    #fugk_table option {
+      color: black;
+      background: white;
+    }
   </style>
 </head>
 
@@ -277,6 +286,7 @@
         <th>fB_i</th>
         <th>a_i,ref</th>
         <th>Key</th>
+        <th>Delete</th>
       </tr>
     </thead>
     <tbody id="fugk_body"></tbody>
@@ -452,7 +462,13 @@ function addFUGKRow() {
         <option value="LNK">LNK</option>
       </select>
     </td>
+    <td>
+      <button class="delete-row">✖</button>
+    </td>
   `;
+
+  // Add delete functionality
+  row.querySelector(".delete-row").onclick = () => row.remove();
 
   fugk_body.appendChild(row);
 }
