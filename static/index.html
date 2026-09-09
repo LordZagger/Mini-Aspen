@@ -483,13 +483,14 @@ async function runFUGK() {
 
     if (!name) return;
 
-    components[name] = [
-      parseFloat(cells[1].value),   // z_i
-      parseFloat(cells[2].value),   // fD_i
-      parseFloat(cells[3].value),   // fB_i
-      parseFloat(cells[4].value),   // a_i,ref
-      cells[5].value                // key (LK/HK/DNK)
-    ];
+  components[name] = {
+    z_i: parseFloat(cells[1].value),
+    fD_i: parseFloat(cells[2].value),
+    fB_i: parseFloat(cells[3].value),
+    a_i_ref: parseFloat(cells[4].value),
+    key: cells[5].value
+  };
+
   });
 
   const data = {
