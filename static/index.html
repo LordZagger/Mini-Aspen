@@ -494,11 +494,11 @@ async function runFUGK() {
   });
 
   const data = {
-    components: components,
-    F: F_fugk.value ? parseFloat(F_fugk.value) : null,
-    q: q_fugk.value ? parseFloat(q_fugk.value) : null,
-    R: R_fugk.value ? parseFloat(R_fugk.value) : null,
-    factor: factor_fugk.value ? parseFloat(factor_fugk.value) : null
+    components,
+    F: parseFloat(F_fugk.value) || 1,
+    q: parseFloat(q_fugk.value) || 0,
+    R: parseFloat(R_fugk.value) || null,
+    factor: parseFloat(factor_fugk.value) || null
   };
 
   const result = await post("https://mini-aspen-backend.onrender.com/fugk", data);
