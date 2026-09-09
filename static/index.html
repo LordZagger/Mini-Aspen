@@ -247,12 +247,15 @@
 
 <script>
 function showSection(id) {
-  document.querySelectorAll('.panel').forEach(s => {s.style.display = 'none';
-    s.classList.remove('active')});
+  document.querySelectorAll('.panel').forEach(s => {
+    s.style.display = 'none';
+    s.classList.remove('active');
+  });
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   const activeSection = document.getElementById(id);
   activeSection.style.display = 'block';
-  activeSection.classList.add('active');   
+  activeSection.classList.add('active');
+
   event.currentTarget.classList.add('active');
 }
 
