@@ -768,7 +768,7 @@ def FUGK(components, F, q, R=None, factor=None):
     will take into account number of valid phi values
     works for up to 2 valid phis (2 valid phis with 3 components, one being a DNK, that is)
     
-    make F=1 if a value isn't provided (if you won't provide a value or any value is known =None)
+    make F=1 if the value isn't provided
     q is feed quality
     R is either given or is calculated from Rmin*factor
     function returns N (actual number of stages) and Nf (optimum feed tray)
