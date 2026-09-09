@@ -333,7 +333,7 @@ def absorption_stripping_single_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsS
     For ideal solution, Raoult's Law applies to both components
     can also maybe use Aspen Plus for a problem like this (Jin idea)
 
-    Returns the factor (absorption or stripping), the solute mole fractions of the products streams (x_out, then y_out) and %recovery as a tuple
+    Returns the factor (absorption or stripping), the solute mole fractions of the products streams (x_out, then y_out) and %recovery as a tuple, in that order
     '''
     if AbsStrip == True and dilute == True:
         L = L_in
