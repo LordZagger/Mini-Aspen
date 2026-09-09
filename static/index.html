@@ -220,6 +220,17 @@
   <input id="xB" placeholder="xB">
   <input id="a" placeholder="alpha">
   <input id="z" placeholder="z">
+  <input id="full_mode" placeholder="full_mode (true/false)" value="true">
+  <input id="R" placeholder="R (optional)">
+  <input id="F" placeholder="F (optional)">
+  <input id="q" placeholder="q (optional)">
+  <input id="D_val" placeholder="D (optional)">
+  <input id="B_val" placeholder="B (optional)">
+  <input id="L_val" placeholder="L (optional)">
+  <input id="V_val" placeholder="V (optional)">
+  <input id="Lp" placeholder="Lp (optional)">
+  <input id="Vp" placeholder="Vp (optional)">
+  <input id="factor" placeholder="factor (optional)">
   <button onclick="runDistill()">Run</button>
 
   <pre id="distill_output"></pre>
@@ -354,8 +365,22 @@ async function runDistill() {
     xD: parseFloat(xD.value),
     xB: parseFloat(xB.value),
     a: parseFloat(a.value),
-    z: parseFloat(z.value)
+    z: parseFloat(z.value),
+
+    full_mode: full_mode.value === "true",
+
+    R: R.value ? parseFloat(R.value) : null,
+    F: F.value ? parseFloat(F.value) : null,
+    q: q.value ? parseFloat(q.value) : null,
+    D: D_val.value ? parseFloat(D_val.value) : null,
+    B: B_val.value ? parseFloat(B_val.value) : null,
+    L: L_val.value ? parseFloat(L_val.value) : null,
+    V: V_val.value ? parseFloat(V_val.value) : null,
+    Lp: Lp.value ? parseFloat(Lp.value) : null,
+    Vp: Vp.value ? parseFloat(Vp.value) : null,
+    factor: factor.value ? parseFloat(factor.value) : null
   };
+
   const result = await post("https://mini-aspen-backend.onrender.com/distillation", data);
   distill_output.textContent = result.output;
 }
