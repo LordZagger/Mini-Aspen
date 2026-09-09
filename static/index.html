@@ -448,13 +448,13 @@ function addFUGKRow() {
   const row = document.createElement("tr");
 
   row.innerHTML = `
-    <td><input placeholder="Name"></td>
-    <td><input placeholder="z_i"></td>
-    <td><input placeholder="fD_i"></td>
-    <td><input placeholder="fB_i"></td>
-    <td><input placeholder="a_i,ref"></td>
+    <td><input name="name" placeholder="Name"></td>
+    <td><input name="z_i" placeholder="z_i"></td>
+    <td><input name="fD_i" placeholder="fD_i"></td>
+    <td><input name="fB_i" placeholder="fB_i"></td>
+    <td><input name="a_i_ref" placeholder="a_i,ref"></td>
     <td>
-      <select>
+      <select name="key">
         <option value="LK">LK</option>
         <option value="HK">HK</option>
         <option value="DNK">DNK</option>
@@ -462,10 +462,9 @@ function addFUGKRow() {
         <option value="LNK">LNK</option>
       </select>
     </td>
-    <td>
-      <button class="delete-row">✖</button>
-    </td>
+    <td><button class="delete-row">✖</button></td>
   `;
+
 
   // Add delete functionality
   row.querySelector(".delete-row").onclick = () => row.remove();
