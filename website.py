@@ -41,7 +41,7 @@ def docs_column():
 
 @app.get("/docs/fugk")
 def docs_fugk():
-    return {"doc": Zmodule260908.fugk.__doc__}
+    return {"doc": Zmodule260908.FUGK.__doc__}
 
 # Utility to capture printed output
 def capture_output(func, *args, **kwargs):
