@@ -39,9 +39,9 @@ def docs_distillation():
 def docs_column():
     return {"doc": Zmodule260908.column_diameter.__doc__}
 
-@router.get("/docs/fugk")
-def get_fugk_doc():
-    return {"doc": "FUGK documentation goes here"}
+@app.get("/docs/fugk")
+def docs_fugk():
+    return {"doc": Zmodule260908.fugk.__doc__}
 
 # Utility to capture printed output
 def capture_output(func, *args, **kwargs):
