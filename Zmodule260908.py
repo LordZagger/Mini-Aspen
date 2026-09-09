@@ -778,16 +778,16 @@ def FUGK(components, F, q, R=None, factor=None):
     
     #1. Fenske
     for key in components:
-        if components[key][4] == 'LK':
-            fD_A = components[key][1]
-            fB_A = components[key][2]
-            aA = components[key][3]
-            zLK = components[key][0]
-        if components[key][4] == 'HK':
-            fD_B = components[key][1]
-            fB_B = components[key][2]
-            aB = components[key][3]
-            zHK = components[key][0]
+        if components[key]["key"] == 'LK':
+            fD_A = components[key]["fD_i"]
+            fB_A = components[key]["fB_i"]
+            aA = components[key]["a_i_ref"]
+            zLK = components[key]["z_i"]
+        if components[key]["key"] == 'HK':
+            fD_B = components[key]["fD_i"]
+            fB_B = components[key]["fB_i"]
+            aB = components[key]["a_i_ref"]
+            zHK = components[key]["z_i"]
     aAB = aA/aB #aAB=KA/KB=KA/Kref / KB/Kref = aA/aB
     Nmin = np.log(fD_A*fB_B/((1-fD_A)*(1-fB_B)))/np.log(aAB)
     
@@ -796,7 +796,7 @@ def FUGK(components, F, q, R=None, factor=None):
     LHS = F*(1-q)
     RHS = 0
     for key in components:
-        RHS += (components[key][3]*F*components[key][0])/(components[key][3]-p)
+        RHS += (components[key]["a_i_ref"]*F*components[key]["z_i"])/(components[key]["a_i_ref"]-p)
     f = RHS - LHS
     soln_set = sp.solveset(f,p)
     for soln in soln_set:
@@ -808,12 +808,12 @@ def FUGK(components, F, q, R=None, factor=None):
     if len(valid_phis) == 1:
         D = 0
         for key in components:
-            D += components[key][1]*components[key][0]*F
+            D += components[key]["fD_i"]*components[key]["z_i"]*F
         B = F - D
         
         phi = float(valid_phis[0])
         for key in components:
-            Vmin += (components[key][3]*components[key][1]*F*components[key][0])/(components[key][3]-phi)
+            Vmin += (components[key]["a_i_ref"]*components[key]["fD_i"]*F*components[key]["z_i"])/(components[key]["a_i_ref"]-phi)
         Rmin = (Vmin-D)/D
     elif len(valid_phis) == 2:
         #x->missing Dxi,D, y->Vmin, f->Vmin with phi1, g->Vmin with phi2
@@ -823,13 +823,13 @@ def FUGK(components, F, q, R=None, factor=None):
         g = 0
         D = 0
         for key in components:
-            if components[key][1] != None and components[key][2] != None:
-                f += (components[key][3]*components[key][1]*F*components[key][0])/(components[key][3]-phi1)
-                g += (components[key][3]*components[key][1]*F*components[key][0])/(components[key][3]-phi2)
-                D += components[key][1]*components[key][0]*F
+            if components[key]["fD_i"] != None and components[key]["fB_i"] != None:
+                f += (components[key]["a_i_ref"]*components[key]["fD_i"]*F*components[key]["z_i"])/(components[key]["a_i_ref"]-phi1)
+                g += (components[key]["a_i_ref"]*components[key]["fD_i"]*F*components[key]["z_i"])/(components[key]["a_i_ref"]-phi2)
+                D += components[key]["fD_i"]*components[key]["z_i"]*F
             else:
-                f += (components[key][3]*x)/(components[key][3]-phi1)
-                g += (components[key][3]*x)/(components[key][3]-phi2)
+                f += (components[key]["a_i_ref"]*x)/(components[key]["a_i_ref"]-phi1)
+                g += (components[key]["a_i_ref"]*x)/(components[key]["a_i_ref"]-phi2)
         f -= y
         g -= y
         soln_set = sp.linsolve([f,g],(x,y))
