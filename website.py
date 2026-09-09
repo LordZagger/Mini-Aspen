@@ -198,3 +198,25 @@ def column_diameter_endpoint(data: ColumnDiameterInput):
         data.sigma, data.Q, data.f, data.n, data.spacing
     )
     return {"diameter_ft": d}
+
+# -----------------------------
+# 7. FUGK
+# -----------------------------
+class FUGKInput(BaseModel):
+    components: dict
+    F: float = 1
+    q: float
+    R: float | None = None
+    factor: float | None = None
+
+@app.post("/fugk")
+def fugk_endpoint(data: FUGKInput):
+    from Zmodule260908 import FUGK
+    result = FUGK(
+        data.components,
+        data.F,
+        data.q,
+        data.R,
+        data.factor
+    )
+    return {"result": result}
