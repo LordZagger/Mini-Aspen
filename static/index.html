@@ -162,7 +162,7 @@ async function loadDocs() {
   };
 
   for (const [id, url] of Object.entries(endpoints)) {
-    const res = await fetch("http://localhost:8000" + url);
+    const res = await fetch("https://mini-aspen-backend.onrender.com" + url);
     const data = await res.json();
     document.getElementById(id).textContent = data.doc;
   }
@@ -178,7 +178,7 @@ async function runWashing() {
     x_in: parseFloat(x_in.value),
     yNplus1: parseFloat(yNplus1.value)
   };
-  const result = await post("http://localhost:8000/washing", data);
+  const result = await post("https://mini-aspen-backend.onrender.com/washing", data);
   washing_output.textContent = result.output;
 }
 
@@ -194,7 +194,7 @@ async function runSingle() {
     AbsStrip: AbsStrip_s.value === "true",
     linear: linear_s.value === "true"
   };
-  const result = await post("http://localhost:8000/abs_strip_single", data);
+  const result = await post("https://mini-aspen-backend.onrender.com/abs_strip_single", data);
   single_output.textContent = JSON.stringify(result.result, null, 2);
 }
 
@@ -211,7 +211,7 @@ async function runMulti() {
     x_out: x_out_m.value ? parseFloat(x_out_m.value) : null,
     y_out: y_out_m.value ? parseFloat(y_out_m.value) : null
   };
-  const result = await post("http://localhost:8000/abs_strip_multi", data);
+  const result = await post("https://mini-aspen-backend.onrender.com/abs_strip_multi", data);
   multi_output.textContent = result.output;
 }
 
@@ -228,7 +228,7 @@ async function runFlash() {
     P: parseFloat(P_f.value),
     T: parseFloat(T_f.value)
   };
-  const result = await post("http://localhost:8000/flash_drum", data);
+  const result = await post("https://mini-aspen-backend.onrender.com/flash_drum", data);
   flash_output.textContent = JSON.stringify(result, null, 2);
 }
 
@@ -239,7 +239,7 @@ async function runDistill() {
     a: parseFloat(a.value),
     z: parseFloat(z.value)
   };
-  const result = await post("http://localhost:8000/distillation", data);
+  const result = await post("https://mini-aspen-backend.onrender.com/distillation", data);
   distill_output.textContent = result.output;
 }
 
@@ -255,7 +255,7 @@ async function runColumn() {
     n: parseFloat(n.value),
     spacing: parseInt(spacing.value)
   };
-  const result = await post("http://localhost:8000/column_diameter", data);
+  const result = await post("https://mini-aspen-backend.onrender.com/column_diameter", data);
   column_output.textContent = JSON.stringify(result, null, 2);
 }
 </script>
