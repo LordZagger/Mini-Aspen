@@ -248,30 +248,6 @@ def time_duration(hours: int, minutes: int) -> None:
         hours = int(input("Hours: "))
         minutes = int(input("Minutes: "))
         time_duration(hours, minutes)
-    
-
-def number_triangle():  # from Melissa Vaziri's COMP 1405 Tutorial 3
-    while True:
-        # Asking The User For An Integer
-        value = input("Enter An Integer Between 1 and 9: ")
-
-        # Checking If The Input Is A Digit and if value is between 1 and 9 inclusive
-        # until these conditions are met, we keep asking for a valid integer
-        if value.isdigit() and 1 <= int(value) <= 9:
-            # Basically, I Assigned "I" As A Variable For The Integer Of The Variable Value
-            i = int(value)
-
-            # This Is Used For A Loop That Repeats A Specific Amount Of Times
-            for row in range(1, i+1):
-
-                # This Is Saying That Col Repeats, And Range Produces Order of Numbers
-                for col in range(row):
-                    print(str(row), end="")
-
-                # Printing Statement so that after a number row is printed, we go to a new line for the next row
-                print()
-            break  # postcondition loop using break. we break out of while True after the triangle is successfully printed; we don't wanna stay stuck in the while True forever like the OG code...
-
 
 def rref_matrix(A, b):
     # A is the coefficient matrix, b is the vector, quick function for solving systems of equations
@@ -1319,7 +1295,6 @@ if __name__ == '__main__':
     #print(simpson_rule_calculator(1/x**3,1,4,6))
     #print(delta_enthalpy_with_shomates(20.17,0.4001,0,0,0,25,100))
     #print(delta_enthalpy_mix(0.9989,delta_enthalpy_with_shomates(-203.6060,1523.290,-3196.413,2474.455,3.855326,12.5,134.7),0.011,delta_enthalpy_with_shomates(50.72389,6.72267,-2.517167,10.15934,-0.200675,12.5,134.7))) #seawater module 3-4 assignment
-    #number_triangle()
     #print(rref_matrix(sp.Matrix([[1,1],[2,1],[1,-1]]),sp.Matrix([[-1],[2],[7]])))
     #print(antoines_vapour_pressure(5.20409,1581.341,-33.5,37))
     #washing_mccabe_thiele(0.5,1,0.01,0.635)
