@@ -91,8 +91,8 @@
     
     .tabs button {
       background: rgba(255, 255, 255, 0.12);
-      color: #f2f2f2;
-      border: 1px solid #f2c200; /* safety yellow border */
+      color: black; /* FIXED */
+      border: 1px solid #f2c200;
       padding: 10px 16px;
       margin-right: 6px;
       border-radius: 6px;
@@ -116,13 +116,13 @@
 <h1>Mini-Aspen</h1>
 
 <!-- Tabs -->
-<div>
-  <div class="tab active" onclick="showSection('washing')">Washing</div>
-  <div class="tab" onclick="showSection('single')">Abs/Strip (Single)</div>
-  <div class="tab" onclick="showSection('multi')">Abs/Strip (Multi)</div>
-  <div class="tab" onclick="showSection('flash')">Flash Drum</div>
-  <div class="tab" onclick="showSection('distill')">Distillation</div>
-  <div class="tab" onclick="showSection('column')">Column Diameter</div>
+<div class="tabs">
+  <button class="tab" onclick="showSection('washing')">Washing</button>
+  <button class="tab" onclick="showSection('single')">Single</button>
+  <button class="tab" onclick="showSection('multi')">Multi</button>
+  <button class="tab" onclick="showSection('flash')">Flash</button>
+  <button class="tab" onclick="showSection('distill')">Distillation</button>
+  <button class="tab" onclick="showSection('column')">Column</button>
 </div>
 
 <!-- Washing Section -->
