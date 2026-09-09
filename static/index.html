@@ -135,6 +135,7 @@
   <button class="tab" onclick="showSection('flash')">Flash</button>
   <button class="tab" onclick="showSection('distill')">Distillation</button>
   <button class="tab" onclick="showSection('column')">Column</button>
+  <button class="tab" onclick="showSection('fugk')">FUGK</button>
 </div>
 
 <!-- Washing Section -->
@@ -255,7 +256,38 @@
   <pre id="column_output"></pre>
 </div>
 
-  
+<!-- FUGK -->
+<div id="fugk" class="panel" style="display:none;">
+  <h2>FUGK – Stage & Feed Tray Estimation</h2>
+  <pre id="fugk_doc"></pre>
+
+  <h3>Global Inputs</h3>
+  <input id="F_fugk" placeholder="F (feed rate, default 1)">
+  <input id="q_fugk" placeholder="q (feed quality)">
+  <input id="R_fugk" placeholder="R (optional)">
+  <input id="factor_fugk" placeholder="factor (optional, multiplies Rmin)">
+
+  <h3>Components</h3>
+  <table id="fugk_table" style="width:100%; border-collapse: collapse;">
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>z_i</th>
+        <th>fD_i</th>
+        <th>fB_i</th>
+        <th>a_i,ref</th>
+        <th>Key</th>
+      </tr>
+    </thead>
+    <tbody id="fugk_body"></tbody>
+  </table>
+
+  <button onclick="addFUGKRow()">Add Component</button>
+  <button onclick="runFUGK()">Run</button>
+
+  <pre id="fugk_output"></pre>
+</div>
+
 <script>
 function showSection(id) {
   document.querySelectorAll('.panel').forEach(s => {
@@ -287,6 +319,7 @@ async function loadDocs() {
     flash_doc: "/docs/flash",
     distill_doc: "/docs/distillation",
     column_doc: "/docs/column"
+    fugk_doc: "/docs/fugk"
   };
 
   for (const [id, url] of Object.entries(endpoints)) {
@@ -400,6 +433,59 @@ async function runColumn() {
   const result = await post("https://mini-aspen-backend.onrender.com/column_diameter", data);
   column_output.textContent = JSON.stringify(result, null, 2);
 }
+  
+function addFUGKRow() {
+  const row = document.createElement("tr");
+
+  row.innerHTML = `
+    <td><input placeholder="Name"></td>
+    <td><input placeholder="z_i"></td>
+    <td><input placeholder="fD_i"></td>
+    <td><input placeholder="fB_i"></td>
+    <td><input placeholder="a_i,ref"></td>
+    <td>
+      <select>
+        <option value="LK">LK</option>
+        <option value="HK">HK</option>
+        <option value="DNK">DNK</option>
+      </select>
+    </td>
+  `;
+
+  fugk_body.appendChild(row);
+}
+
+async function runFUGK() {
+  const rows = fugk_body.querySelectorAll("tr");
+  const components = {};
+
+  rows.forEach(row => {
+    const cells = row.querySelectorAll("input, select");
+    const name = cells[0].value.trim();
+
+    if (!name) return;
+
+    components[name] = [
+      parseFloat(cells[1].value),   // z_i
+      parseFloat(cells[2].value),   // fD_i
+      parseFloat(cells[3].value),   // fB_i
+      parseFloat(cells[4].value),   // a_i,ref
+      cells[5].value                // key (LK/HK/DNK)
+    ];
+  });
+
+  const data = {
+    components: components,
+    F: F_fugk.value ? parseFloat(F_fugk.value) : null,
+    q: q_fugk.value ? parseFloat(q_fugk.value) : null,
+    R: R_fugk.value ? parseFloat(R_fugk.value) : null,
+    factor: factor_fugk.value ? parseFloat(factor_fugk.value) : null
+  };
+
+  const result = await post("https://mini-aspen-backend.onrender.com/fugk", data);
+  fugk_output.textContent = JSON.stringify(result, null, 2);
+}
+
 </script>
 
 </div>
