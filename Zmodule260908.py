@@ -841,7 +841,7 @@ def FUGK(components, F, q, R=None, factor=None):
         Rmin = (Vmin-D)/D
     
     #4. Gilliland
-    if R == None and factor!=None:
+    if factor!=None:
         R = factor*Rmin
     xG = (R-Rmin)/(R+1)
     if 0 <= xG < 0.01:
