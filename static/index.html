@@ -312,28 +312,13 @@ function showSection(id) {
   event.currentTarget.classList.add('active');
 }
 
-/*async function post(url, payload) {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(payload)
-  });
-  return res.json();
-}*/
 async function post(url, payload) {
   const res = await fetch(url, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify(payload)
   });
-
-  const text = await res.text();
-
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}: ${text}`);
-  }
-
-  return JSON.parse(text);
+  return res.json();
 }
 
 async function loadDocs() {
@@ -487,7 +472,7 @@ function addFUGKRow() {
   fugk_body.appendChild(row);
 }
 
-/*async function runFUGK() {
+async function runFUGK() {
   const rows = fugk_body.querySelectorAll("tr");
   const components = {};
 
@@ -517,49 +502,8 @@ function addFUGKRow() {
 
   const result = await post("https://mini-aspen-backend.onrender.com/fugk", data);
   fugk_output.textContent = JSON.stringify(result, null, 2);
-}*/
-async function runFUGK() {
-  try {
-    const rows = fugk_body.querySelectorAll("tr");
-    const components = {};
-
-    rows.forEach(row => {
-      const cells = row.querySelectorAll("input, select");
-      const name = cells[0].value.trim();
-
-      if (!name) return;
-
-      components[name] = {
-        z_i: parseFloat(cells[1].value),
-        fD_i: parseFloat(cells[2].value),
-        fB_i: parseFloat(cells[3].value),
-        a_i_ref: parseFloat(cells[4].value),
-        key: cells[5].value
-      };
-    });
-
-    const data = {
-      components,
-      F: parseFloat(F_fugk.value) || 1,
-      q: parseFloat(q_fugk.value) || 0,
-      R: parseFloat(R_fugk.value) || null,
-      factor: parseFloat(factor_fugk.value) || null
-    };
-
-    console.log("FUGK payload:", data);
-
-    const result = await post(
-      "https://mini-aspen-backend.onrender.com/fugk",
-      data
-    );
-
-    fugk_output.textContent = JSON.stringify(result, null, 2);
-
-  } catch (error) {
-    console.error("FUGK ERROR:", error);
-    fugk_output.textContent = error.toString();
-  }
 }
+
 </script>
 
 </div>
