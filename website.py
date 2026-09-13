@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import Zmodule260908
 from fastapi.middleware.cors import CORSMiddleware
 import io, sys
+import sympy as sp
 
 app = FastAPI(title="Mini-Aspen")
 
@@ -14,6 +15,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def make_json_safe(obj):
+    if isinstance(obj, dict):
+        return {str(k): make_json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [make_json_safe(v) for v in obj]
+    if isinstance(obj, sp.Integer):
+        return int(obj)
+    if isinstance(obj, sp.Float):
+        return float(obj)
+    if isinstance(obj, sp.Rational):
+        return float(obj)
+    return obj
 
 @app.get("/docs/washing")
 def docs_washing():
@@ -219,4 +232,4 @@ def fugk_endpoint(data: FUGKInput):
         data.R,
         data.factor
     )
-    return {"result": result}
+    return {"result": make_json_safe(result)}
