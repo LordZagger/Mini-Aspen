@@ -63,8 +63,8 @@ def washing_mccabe_thiele(U, O, x_out, x_in, yNplus1=0):
         plt.text(sum(plot_xs[j:j+2])/2, sum([plot_ys[j],plot_ys[j]])/2, str(j+1), ha="center", va="bottom")
         plt.plot([plot_xs[j+1],plot_xs[j+1]],plot_ys[j:j+2],color="grey")
         j += 1
-    plt.xlim(0,x_in+0.01)
-    plt.ylim(0,plot_ys[0]+0.02)
+    plt.xlim(0,x_in)
+    plt.ylim(0,plot_ys[0])
     plt.xlabel("x")
     plt.ylabel("y")
     plt.title("McCabe-Thiele Stepping")
