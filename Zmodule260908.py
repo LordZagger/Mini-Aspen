@@ -32,8 +32,8 @@ def washing_mccabe_thiele(U, O, x_out, x_in, yNplus1=0):
  
     Prints a table of mass fractions at each stage, using the algebraic method to calculate all mass fractions
     And prints required number of stages to achieve desired purity
-    Then presents a McCabe-Thiele stepping graph
-    Please use floats for inputs
+    Then presents a McCabe-Thiele stepping graph corresponding to the printed table
+    Please use floats for inputs!
     '''
     plot_xs = [x_in]
     plot_ys = []
