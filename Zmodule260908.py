@@ -1,9 +1,12 @@
 # this module contains function I think could be one day useful, and other random stuff like tips and constants
 import sympy as sp
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as scp
 import pandas as pd
+import io
 
 '''
 Format of a good docstring:
@@ -26,23 +29,53 @@ def washing_mccabe_thiele(U, O, x_out, x_in, yNplus1=0):
     x_out - xN, desired purity
     x_in - x0, salt mass fraction of source entrained liquid (underflow)
     y_N+1 - y_in, salt mass fraction of source wash liquid (overflow), typically 0
-
+ 
     Prints a table of mass fractions at each stage, using the algebraic method to calculate all mass fractions
     And prints required number of stages to achieve desired purity
     Please use floats for inputs
     '''
+    plot_xs = [x_in]
+    plot_ys = []
     print("[i, x_i, y_i+1]")
     x_i = x_in  # x0
     i = 0
     while x_i > x_out: #stepping down
         y_iplus1 = U/O*x_i + yNplus1 - U/O * x_out  # operating line (to get y_i+1)
+        plot_ys.append(y_iplus1)
         current_row = [i, x_i, y_iplus1]
         print(current_row)
         i += 1
         x_i = y_iplus1  # equilibrium line (to get x_i of the new (current) i)
+        plot_xs.append(x_i)
+    plot_ys.append(U/O*x_i + yNplus1 - U/O * x_out) #last y for plotting
     print(f"[{i}, {x_i}, ]")
     print(f"N = {i} stages")
-
+    
+    #plot
+    op_line_x = np.linspace(0,1,100)
+    op_line_y = U/O*op_line_x + yNplus1 - U/O * x_out
+    plt.plot(op_line_x, op_line_y, color="blue", label="Operating Line")
+    plt.plot(op_line_x, op_line_x, color="orange", label="Equilibrium Line")
+    plt.scatter(plot_xs,plot_ys, color="black")
+    j = 0
+    while j < i:
+        plt.plot(plot_xs[j:j+2],[plot_ys[j],plot_ys[j]],color="grey", label="Stepping" if j==0 else "_nolegend_")
+        plt.text(sum(plot_xs[j:j+2])/2, sum([plot_ys[j],plot_ys[j]])/2, str(j+1), ha="center", va="bottom")
+        plt.plot([plot_xs[j+1],plot_xs[j+1]],plot_ys[j:j+2],color="grey")
+        j += 1
+    plt.xlim(0,x_in+0.01)
+    plt.ylim(0,plot_ys[0]+0.02)
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.title("McCabe-Thiele Stepping")
+    plt.legend(loc="upper left")
+    #save graph as png
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format="png", bbox_inches="tight")
+    plt.close()
+    #Return the graph data
+    img_buffer.seek(0)
+    return img_buffer.getvalue()
 
 def absorption_stripping_single_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsStrip, linear=False):
     '''
