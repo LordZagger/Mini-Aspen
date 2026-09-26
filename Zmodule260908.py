@@ -262,7 +262,7 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
         #slope_min -> L_min/V
         slope_min = (y_in-y_out)/(x_out-x_in)
         Lp_min = slope_min*V
-        print(f"L'_min = {Lp_min}")
+        print(f"L_min = {Lp_min}")
 
     elif AbsStrip == True and dilute == False:
         Y_in = y_in/(1-y_in)
