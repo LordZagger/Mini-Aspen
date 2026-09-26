@@ -160,6 +160,7 @@
   <button onclick="runWashing()">Run</button>
 
   <pre id="washing_output"></pre>
+  <img id="washing_graph" style="display: none; max-width: 100%;">
 </div>
 
 <!-- Single Stage Abs/Strip -->
@@ -350,7 +351,11 @@ async function runWashing() {
     yNplus1: parseFloat(yNplus1.value)
   };
   const result = await post("https://mini-aspen-backend.onrender.com/washing", data);
+  // Display the table output
   washing_output.textContent = result.output;
+  // Display the graph underneath the table
+  washing_graph.src = "data:image/png;base64," + result.graph;
+  washing_graph.style.display = "block";
 }
 
 async function runSingle() {
