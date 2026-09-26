@@ -4,6 +4,7 @@ import Zmodule260908
 from fastapi.middleware.cors import CORSMiddleware
 import io, sys
 import sympy as sp
+import base64
 
 app = FastAPI(title="Mini-Aspen")
 
@@ -56,13 +57,13 @@ def docs_column():
 def docs_fugk():
     return {"doc": Zmodule260908.FUGK.__doc__}
 
-# Utility to capture printed output
+# Utility to capture printed output and function return value
 def capture_output(func, *args, **kwargs):
     buffer = io.StringIO()
     sys.stdout = buffer
-    func(*args, **kwargs)
+    result = func(*args, **kwargs)
     sys.stdout = sys.__stdout__
-    return buffer.getvalue()
+    return buffer.getvalue(), result
 
 
 # -----------------------------
@@ -77,12 +78,15 @@ class WashingInput(BaseModel):
 
 @app.post("/washing")
 def washing_endpoint(data: WashingInput):
-    output = capture_output(
+    output, graph_bytes = capture_output(
         Zmodule260908.washing_mccabe_thiele,
         data.U, data.O, data.x_out, data.x_in, data.yNplus1
     )
-    return {"output": output}
-
+    graph_b64 = base64.b64encode(graph_bytes).decode("utf-8")
+    return {
+        "output": output,
+        "graph": graph_b64
+    }
 
 # -----------------------------
 # 2. Absorption/Stripping (Single Stage)
