@@ -60,8 +60,9 @@ def washing_mccabe_thiele(U, O, x_out, x_in, yNplus1=0):
     plt.scatter(plot_xs,plot_ys, color="black")
     j = 0
     while j < i:
+        #horizontal line, then vertical line
         plt.plot(plot_xs[j:j+2],[plot_ys[j],plot_ys[j]],color="grey", label="Stepping" if j==0 else "_nolegend_")
-        plt.text(sum(plot_xs[j:j+2])/2, sum([plot_ys[j],plot_ys[j]])/2, str(j+1), ha="center", va="bottom")
+        plt.text(sum(plot_xs[j:j+2])/2, sum([plot_ys[j],plot_ys[j]])/2, str(j+1), ha="center", va="bottom") #step number label
         plt.plot([plot_xs[j+1],plot_xs[j+1]],plot_ys[j:j+2],color="grey")
         j += 1
     plt.xlim(0,x_in*1.1)
