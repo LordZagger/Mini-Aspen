@@ -59,6 +59,8 @@ def washing_mccabe_thiele(U, O, x_out, x_in, yNplus1=0):
     plt.plot(op_line_x, op_line_y, color="blue", label="Operating Line")
     plt.plot(op_line_x, op_line_x, color="orange", label="Equilibrium Line")
     plt.scatter(plot_xs,plot_ys, color="black")
+    plt.scatter(x_in, plot_ys[0], color="red", label="(x0,y1)")
+    plt.scatter(x_out, yNplus1, color="red", label="(xN, yN+1)")
     j = 0
     while j < i:
         #horizontal line, then vertical line
