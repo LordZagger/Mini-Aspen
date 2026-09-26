@@ -91,7 +91,7 @@ def absorption_stripping_single_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsS
     AbsStrip - boolean (True or False), True if this is for absorption, False for Stripping
     V' - flowrate of carrier gas
     L' - flowrate of pure liquid
-    linear - for concentrated solutions, in case the eq. line given is linear, give K as the coefficient of x
+    linear - for concentrated solutions, put true if the eq. line given is linear
 
     For dilute solutions, Henry's Law applies to solute and Raoult's to the solvent, assume L_out=L_in=L and V_out=V_in=V
     For ideal solution, Raoult's Law applies to both components
