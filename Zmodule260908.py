@@ -24,6 +24,7 @@ inf = sp.S.Infinity #simpler to write, positive infinity
 
 def washing_mccabe_thiele(U, O, x_out, x_in, yNplus1=0):
     '''
+    Warning: this is for countercurrent flow!
     U - underflow liquid's mass flow rate
     O - overflow liquid's mass flow rate
     x_out - xN, desired purity
