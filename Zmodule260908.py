@@ -689,7 +689,12 @@ def binary_distillation_mccabe_thiele(xD,xB,a,z,F=1,R=None,q=None,D=None,B=None,
     plt.ylim(0,min(1,max(plot_ys)*1.1))
     plt.title("McCabe-Thiele Stepping")
     plt.legend(loc="best")
-    plt.show()
+    
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format="png", bbox_inches="tight")
+    plt.close()
+    img_buffer.seek(0)
+    return img_buffer.getvalue()
 
 def column_diameter(WL, pL, WV, pV, sigma, Q, f, n, spacing):
     '''
