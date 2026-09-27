@@ -313,6 +313,7 @@
   <button onclick="runFUGK()">Run</button>
 
   <pre id="fugk_output"></pre>
+  <div id="fugk_graphs"></div>
 </div>
 
 <script>
@@ -538,6 +539,23 @@ async function runFUGK() {
 
   const result = await post("https://mini-aspen-backend.onrender.com/fugk", data);
   fugk_output.textContent = JSON.stringify(result, null, 2);
+
+  const fugkGraphs = document.getElementById("fugk_graphs");
+  fugkGraphs.innerHTML = "";
+  
+  if (result.graphs) {
+      result.graphs.forEach(graph => {
+          const img = document.createElement("img");
+  
+          img.src = "data:image/png;base64," + graph;
+  
+          img.style.maxWidth = "100%";
+          img.style.display = "block";
+          img.style.marginTop = "20px";
+  
+          fugkGraphs.appendChild(img);
+      });
+  }
 }
 
 </script>
