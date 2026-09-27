@@ -424,10 +424,8 @@ async function runDistill() {
     a: parseFloat(a.value),
     z: parseFloat(z.value),
 
-    full_mode: full_mode.value === "true",
-
+    F: F.value ? parseFloat(F.value) : 1,
     R: R.value ? parseFloat(R.value) : null,
-    F: F.value ? parseFloat(F.value) : null,
     q: q.value ? parseFloat(q.value) : null,
     D: D_val.value ? parseFloat(D_val.value) : null,
     B: B_val.value ? parseFloat(B_val.value) : null,
@@ -435,11 +433,21 @@ async function runDistill() {
     V: V_val.value ? parseFloat(V_val.value) : null,
     Lp: Lp.value ? parseFloat(Lp.value) : null,
     Vp: Vp.value ? parseFloat(Vp.value) : null,
-    factor: factor.value ? parseFloat(factor.value) : null
+    boilup_ratio: boilup_ratio.value ? parseFloat(boilup_ratio.value) : null,
+    Rmin_factor: Rmin_factor.value ? parseFloat(Rmin_factor.value) : null,
+    EML: EML.value ? parseFloat(EML.value) : null,
+    EMV: EMV.value ? parseFloat(EMV.value) : null
   };
 
-  const result = await post("https://mini-aspen-backend.onrender.com/distillation", data);
+  const result = await post(
+    "https://mini-aspen-backend.onrender.com/binary_distillation",
+    data
+  );
+
   distill_output.textContent = result.output;
+
+  distill_graph.src = "data:image/png;base64," + result.graph;
+  distill_graph.style.display = "block";
 }
 
 async function runColumn() {
