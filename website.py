@@ -176,9 +176,8 @@ class DistillationInput(BaseModel):
     xB: float
     a: float
     z: float
-    full_mode: bool = True
+    F: float = 1
     R: float | None = None
-    F: float | None = None
     q: float | None = None
     D: float | None = None
     B: float | None = None
@@ -186,19 +185,38 @@ class DistillationInput(BaseModel):
     V: float | None = None
     Lp: float | None = None
     Vp: float | None = None
-    factor: float | None = None
+    boilup_ratio: float | None = None
+    Rmin_factor: float | None = None
+    EML: float | None = None
+    EMV: float | None = None
 
 @app.post("/distillation")
 def distillation_endpoint(data: DistillationInput):
-    output = capture_output(
+    output, graph_bytes = capture_output(
         Zmodule260908.binary_distillation_mccabe_thiele,
-        data.xD, data.xB, data.a, data.z,
-        data.full_mode, data.R, data.F, data.q,
-        data.D, data.B, data.L, data.V,
-        data.Lp, data.Vp, data.factor
+        data.xD,
+        data.xB,
+        data.a,
+        data.z,
+        data.F,
+        data.R,
+        data.q,
+        data.D,
+        data.B,
+        data.L,
+        data.V,
+        data.Lp,
+        data.Vp,
+        data.boilup_ratio,
+        data.Rmin_factor,
+        data.EML,
+        data.EMV
     )
-    return {"output": output}
-
+    graph_b64 = base64.b64encode(graph_bytes).decode("utf-8")
+    return {
+        "output": output,
+        "graph": graph_b64
+    }
 
 # -----------------------------
 # 6. Column Diameter
