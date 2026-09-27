@@ -728,21 +728,49 @@ def column_diameter(WL, pL, WV, pV, sigma, Q, f, n, spacing):
     d = np.sqrt(4*Ac/float(pi))
     return d
     
-
-def FUGK(components, F, q, R=None, factor=None):
+def FUGK(components, F, q, R=None, factor=None, mccabe_thiele=False, feed_tray=None):
     '''
-    components: dictionary, where each component is a key (name as string or number as an int), and their data is the value (keep all data about the problem in one spot)
-    value should be the list: z_i, fD,i, fB,i, a_i,ref, key (as a string)
+    components: dictionary, where each component's data is also a dictionary (sort of like a pandas dataframe)
+    ex:
+        {'P': {'z_i': 0.25,
+                'fD_i': 0.995,
+                'fB_i': 0.005,
+                'a_i_ref': 13.33,
+                'key': 'LK'},
+            'HX': {
+                'z_i': 0.25,
+                'fD_i': 0.05,
+                'fB_i': 0.95,
+                'a_i_ref': 5.42,
+                'key': 'HK'},
+            'HP': {
+                'z_i': 0.25,
+                'fD_i': 0,
+                'fB_i': 1,
+                'a_i_ref': 2.33,
+                'key': 'HNK'},
+            'O': {
+                'z_i': 0.25,
+                'fD_i': 0,
+                'fB_i': 1,
+                'a_i_ref': 1,
+                'key': 'HNK'}}
     assume class 2 separation (i.e. LNK only at top and HNK only at bottom)
     
     the function uses FUGK to calculate the actual number of stages and optimum feed tray based on provided data
-    will take into account number of valid phi values
-    works for up to 2 valid phis (2 valid phis with 3 components, one being a DNK, that is)
+    the function will take into account number of valid phi values; works for up to 2 valid phis (2 valid phis with 3 components, one being a DNK, that is)
     
-    make F=1 if the value isn't provided
+    afterwards, if activated, the function performs mccabe-thiele stepping based on the given data to support the FUGK answer (and for visuals)
+    be aware that when we're stepping from the bottom up, a stage is counted from the top as (number of stages)-(stage number from the bottom)
+    
+    Separations with DNK are handled by the FUGK calculation but are not supported by the McCabe–Thiele visualization!
+    Please use mccabe_thiele=false in those cases!
+    
+    code makes F=1 if the None isn't provided
     q is feed quality
     R is either given or is calculated from Rmin*factor
-    function returns N (actual number of stages) and Nf (optimum feed tray)
+    function returns N (actual number of stages) and Nf (optimum feed tray),
+    then a plot of liquid composition profile (from mccabe-thiele) and a plot of #stages vs feed tray location
     '''
     if F==None:
         F=1
@@ -834,15 +862,236 @@ def FUGK(components, F, q, R=None, factor=None):
     for soln in soln_set:
         Nf = soln
     
+    #----------------------------------------------------------#
+    #McCabe Thiele time!
+    if mccabe_thiele == True:
+        zs = []
+        fDs = []
+        fBs = []
+        a_refs = []
+        keys = []
+        for species in components:
+            zs.append(components[species]['z_i'])
+            fDs.append(components[species]['fD_i'])
+            fBs.append(components[species]['fB_i'])
+            a_refs.append(components[species]['a_i_ref'])
+            keys.append(components[species]['key'])
+        num_components = len(zs)
+        
+        
+        i=0
+        D = 0
+        while i < num_components:
+            D += fDs[i]*zs[i]*F
+            i += 1
+        B = F-D
+        
+        df = pd.DataFrame(components).T
+        df["xD_i"] = df["fD_i"]*df["z_i"]*F/D
+        df["xB_i"] = df["fB_i"]*df["z_i"]*F/B
+        df["top slope"] = R/(R+1)
+        df["top y-int"] = df["xD_i"]/(R+1)
+        
+        L = R*D
+        V = L+D
+        Lp = L+q*F 
+        Vp = V-(1-q)*F
+        df["bottom slope"] = Lp/Vp
+        df["bottom y-int"] = (1-Lp/Vp)*df["xB_i"]
+        
+        LK = None
+        HK = None
+        for species in components.keys():
+            if df.loc[species, "key"] == "LK":
+                LK = species
+            elif df.loc[species, "key"] == "HK":
+                HK = species
+                
+        def liquid_profile(feed_tray):
+            stages = np.arange(0,31)
+            df2 = pd.DataFrame(stages,columns=["Stage"])
+            for species in list(components.keys()):
+                df2[f"{species}x"] = 0.0
+                df2[f"{species}y"] = 0.0
+            
+            # if there are no HNKs, step from the top down
+            if "HNK" not in keys:
+            
+                # Start at the distillate composition
+                for species in components.keys():
+                    df2.loc[0, f"{species}x"] = df.loc[species, "xD_i"]
+            
+                for num in range(1, 31):
+            
+                    # Calculate y from the operating line using the previous x
+                    for species in components.keys():
+                        xl = df2.loc[num - 1, f"{species}x"]
+            
+                        if num < feed_tray:
+                            df2.loc[num, f"{species}y"] = xl * df.loc[species, "top slope"] + df.loc[species, "top y-int"]
+                        else:
+                            df2.loc[num, f"{species}y"] = xl * df.loc[species, "bottom slope"] + df.loc[species, "bottom y-int"]
+            
+                    # Calculate new x from equilibrium relationship
+                    sum_y_alpha = sum(df2.loc[num, f"{species}y"] / df.loc[species, "a_i_ref"] for species in components.keys())
+            
+                    for species in components.keys():
+                        df2.loc[num, f"{species}x"] = (df2.loc[num, f"{species}y"] / df.loc[species, "a_i_ref"]) / sum_y_alpha
+            
+                    # Stop when LK and HK reach their bottoms specifications
+                    if df2.loc[num, f"{LK}x"] <= df.loc[LK, "xB_i"] and df2.loc[num, f"{HK}x"] >= df.loc[HK, "xB_i"]:
+                        break
+                    
+            # if there are no LNKs, step from the bottom up
+            if "LNK" not in keys:
+                for species in components.keys():
+                    # Start at the bottoms composition
+                    df2.loc[0, f"{species}x"] = df.loc[species, "xB_i"]
+            
+                for num in range(1, 31):
+    
+                    # Calculate sum(x*a)
+                    sum_x_alpha = sum(df2.loc[num - 1, f"{species}x"] * df.loc[species, "a_i_ref"] for species in components.keys())
+                    df2.loc[num, "sum(x*a)"] = sum_x_alpha
+                
+                    # Calculate equilibrium y
+                    for species in components.keys():
+                        df2.loc[num, f"{species}y"] = df2.loc[num - 1, f"{species}x"] * df.loc[species, "a_i_ref"] / sum_x_alpha
+                
+                    # Calculate new x from operating line
+                    for species in components.keys():
+                        yl = df2.loc[num, f"{species}y"]
+                
+                        if num < feed_tray:
+                            df2.loc[num, f"{species}x"] = (yl - df.loc[species, "bottom y-int"]) / df.loc[species, "bottom slope"]
+                        else:
+                            df2.loc[num, f"{species}x"] = (yl - df.loc[species, "top y-int"]) / df.loc[species, "top slope"]
+                
+                    # Check whether the desired separation has been reached
+                    if df2.loc[num, f"{LK}x"] >= df.loc[LK, "xD_i"] and df2.loc[num, f"{HK}x"] <= df.loc[HK, "xD_i"]:
+                        break
+                    
+            return df2.iloc[:num+1], num
+        
+        df2, N2 = liquid_profile(feed_tray)
+        figure2_x = list(range(1,N2))
+        figure2_y = []
+        for numero in figure2_x:
+            figure2_y.append(liquid_profile(numero)[1])
+        
+        plt.figure()
+        if "LNK" not in keys:
+            plt.axhline(y=df.loc[LK, "xD_i"],color="red",linestyle="--")
+            plt.axhline(y=df.loc[HK, "xD_i"],color="red",linestyle="--")
+        if "HNK" not in keys:
+            plt.axhline(y=df.loc[LK, "xB_i"],color="red",linestyle="--")
+            plt.axhline(y=df.loc[HK, "xB_i"],color="red",linestyle="--")
+        for species in components.keys():
+            plt.plot(df2["Stage"].values, df2[f"{species}x"].values,label=f"{species}")
+        plt.xlim(0,N2)
+        plt.ylim(0,1)
+        plt.xlabel("Stage")
+        plt.ylabel("Liquid mole fraction")
+        plt.title("Liquid composition profile")
+        plt.legend(loc="best")
+        
+        plt.figure()
+        plt.plot(figure2_x,figure2_y)
+        plt.xlabel("Feed Stage Location")
+        plt.ylabel("Number of stages")
+        plt.title("#Stages vs Feed tray location")
+        plt.show()
+        
     return (np.ceil(N),Nf)
 
 # testing (if module is not imported)
 if __name__ == '__main__':
-    #washing_mccabe_thiele(0.5,1,0.01,0.635)
+    #washing_mccabe_thiele(0.5,1,0.005,0.635)
     #print(absorption_stripping_single_stage(100,25,0,0.015,1,2.5,True,True))
-    #absorption_stripping_multi_stage(100,160,0.05,0,1,0.85,True,False,x_out=0.00120671)
+    #absorption_stripping_multi_stage(1,0.65,0.1,0,1,1.5,False,False,x_out=0.005)
     #print(binary_flash_drum_sizing(0.7914,1,32.04,18.01,736,264,0.2,0.579,1,81.7))
-    #binary_distillation_mccabe_thiele(0.96,0.02,1.76,0.1,full_mode=False,R=4)
+    #binary_distillation_mccabe_thiele(0.9, 0.1, 2.5, 0.4, F=100, R=3, q=0.5, EMV=0.7)
     #print(column_diameter(17500,700,19000,3.5,20,19000/3.5*35.3147,0.8,0.9,24))
-    print(FUGK({'P': [0.25,0.995,0.005,13.33,'LK'],'HX': [0.25,0.05,0.95,5.42,'HK'],'HP': [0.25,0,1,2.33,'HNK'],'O': [0.25,0,1,1,'HNK']}, None, 0, R=6)) #1 valid phi (straightforward)
-    #print(FUGK({'B': [0.397,0.9992,0.0008,2.25,'LK'],'T': [0.167,None,None,1,'DNK'], 'C': [0.436,0.0001,0.9999,0.21,'HK']}, 1000, 1, R=1.2)) #2 valid phis (system of equations)
+    print(FUGK({
+        'P': {
+            'z_i': 0.25,
+            'fD_i': 0.995,
+            'fB_i': 0.005,
+            'a_i_ref': 13.33,
+            'key': 'LK'
+        },
+        'HX': {
+            'z_i': 0.25,
+            'fD_i': 0.05,
+            'fB_i': 0.95,
+            'a_i_ref': 5.42,
+            'key': 'HK'
+        },
+        'HP': {
+            'z_i': 0.25,
+            'fD_i': 0,
+            'fB_i': 1,
+            'a_i_ref': 2.33,
+            'key': 'HNK'
+        },
+        'O': {
+            'z_i': 0.25,
+            'fD_i': 0,
+            'fB_i': 1,
+            'a_i_ref': 1,
+            'key': 'HNK'
+        }
+    }, 1, 0, R=6,mccabe_thiele=True,feed_tray=10))
+    print(FUGK({
+        'C3': {
+            'z_i': 0.05,
+            'fD_i': 1,
+            'fB_i': 0,
+            'a_i_ref': 5,
+            'key': 'LNK'
+        },
+        'C4': {
+            'z_i': 0.3,
+            'fD_i': 1,
+            'fB_i': 0,
+            'a_i_ref': 2,
+            'key': 'LNK'
+        },
+        'C5': {
+            'z_i': 0.5,
+            'fD_i': 0.95,
+            'fB_i': 0.05,
+            'a_i_ref': 1.5,
+            'key': 'LK'
+        },
+        'C6': {
+            'z_i': 0.15,
+            'fD_i': 0.05,
+            'fB_i': 0.95,
+            'a_i_ref': 1,
+            'key': 'HK'
+        }
+    }, 1000, 0, R=10,mccabe_thiele=True,feed_tray=5))
+    # print(FUGK({
+    #     'B': {
+    #         'z_i': 0.397,
+    #         'fD_i': 0.9992,
+    #         'fB_i': 0.0008,
+    #         'a_i_ref': 2.25,
+    #         'key': 'LK'
+    #     },
+    #     'T': {
+    #         'z_i': 0.167,
+    #         'fD_i': None,
+    #         'fB_i': None,
+    #         'a_i_ref': 1,
+    #         'key': 'DNK'
+    #     },
+    #     'C': {
+    #         'z_i': 0.436,
+    #         'fD_i': 0.0001,
+    #         'fB_i': 0.9999,
+    #         'a_i_ref': 0.21,
+    #         'key': 'HK'
+    #     }
+    # }, 1000, 1, R=1.2)) #2 valid phis (system of equations)
