@@ -501,22 +501,28 @@ def binary_flash_drum_sizing(p_a, p_b, MW_a, MW_b, L, V, x_a, y_a, P, T):
     D = np.sqrt(4*A/np.pi)
     return D #ft
 
-def binary_distillation_mccabe_thiele(xD,xB,a,z,full_mode=True,R=None,F=None,q=None,D=None,B=None,L=None,V=None,Lp=None,Vp=None,factor=None):
+def binary_distillation_mccabe_thiele(xD,xB,a,z,F=1,R=None,q=None,D=None,B=None,L=None,V=None,Lp=None,Vp=None,boilup_ratio=None,Rmin_factor=None,EML=None,EMV=None):
     '''
     McCabe-Thiele stepping for binary distillation, assuming CMO and feed entering at optimum tray
-    Also assumes Total condenser and partial reboiler; steps from the top
+    Also assumes Total condenser and partial reboiler
+    Steps from the top down for ideal stages or if EML (liquid Murphree efficiency) is given,
+    and steps from the bottom up if EMV (vapour Murphree efficiency) is given
     
-    When Provided at the minimum xD, xB, alpha and z, the function determines Rmin, Nmin (only in full_mode=True), and N 
-    COUNT THE NUMBER OF TRAYS APPROPRIATELY
-    full_mode=True is recommended, unless you don't need Nmin or Rmin
+    When provided with xD, xB, alpha and z (and other available values), the function determines Rmin, Nmin, and N
+    Then presents a McCabe-Thiele stepping graph which can be used to determine optimum feed tray
     
     Useful equations:
     Top op. line: y_i+1 = L/V*x_i + (1-L/V)*xD = R/(R+1)*x_i + xD/(R+1)
     Bottom op. line: y_i+1 = L'/V'*x_i + (1-L'/V')*xB
     q-line: y = q/(q-1)*x - z/(q-1)
     Equilibrium line (Raoult's): y=a*x/(1+(a-1)*x)
+                      
+    (Only works for problems where a constant alpha is given)
+    (if no alpha is given, you could hypothetically approximate it if a line of the form y=a*x/(1+(a-1)*x) is fitted through equilibrium data)
     '''
-    #Calculating possibly useful data from given arguments
+    #Calculating as much process data as possible from given arguments
+    if F==None and D!=None and B!=None:
+        F = D+B
     if R==None and D!=None and L!=None:
         R = L/D
     if R==None and L!=None and V!=None:
@@ -526,63 +532,164 @@ def binary_distillation_mccabe_thiele(xD,xB,a,z,full_mode=True,R=None,F=None,q=N
         soln_set = sp.linsolve([x+y-F,xD*x+xB*y-z*F],(x,y))
         for item in soln_set:
             soln_tup = item
-        D = soln_tup[0]
-        B = soln_tup[1]
+        D = float(soln_tup[0])
+        B = float(soln_tup[1])
     if R!=None and D!=None and L==None:
         L=R*D
         if V==None:
             V=L+D
-    if q==None and Lp!=None and L!=None and F!=None:
-        q = (Lp-L)/F
-    if q==None and R!=None and Lp!=None and Vp!=None:
+    if Vp==None and Lp==None and B!=None and boilup_ratio!=None:
+        Vp = B*boilup_ratio
+        Lp = Vp + B
+    if q==None and R!=None and Lp!=None and Vp!=None: 
+        #find intersection of top and bottom operating lines, plug into the q-line to create an equation to solve for q
         soln_set3 = sp.solveset(R/(R+1)*x+xD/(R+1)-(Lp/Vp*x+(1-Lp/Vp)*xB),x)
         for soln in soln_set3:
             intx2 = soln
         inty2 = R/(R+1)*intx2+xD/(R+1)
         soln_set4 = sp.solveset(s/(s-1)*intx2-z/(s-1)-inty2,s) #s represents q
         for soln in soln_set4:
-            q = soln
+            q = float(soln)
+    if q==None and Lp!=None and L!=None and F!=None:
+        q = (Lp-L)/F
     if Lp==None and q!=None and F!=None and L!=None:
         Lp=q*F+L
     if Vp==None and B!=None and Lp!=None:
         Vp=Lp-B
     
-    if full_mode:
-        #From Fenske equation (at total reflux)
-        N_min = int(np.ceil(sp.log((xD*(1-xB))/((1-xD)*xB))/sp.log(a)))
-        print(f"N_min = {N_min} ({N_min-1} stages + reboiler)")
-        
-        #min reflux occurs when top op. line intersects the eq. line, so find slope of this theoretical top op line using q-line
-        soln_set2 = sp.solveset(a*x/(1+(a-1)*x)-(q/(q-1)*x-z/(q-1)),x) #make q-line and eq. line equal to find intersection x, then y
-        for soln in soln_set2:
-            if 0 <= soln <= 1:
-                intx = soln
-        inty = a*intx/(1+(a-1)*intx)
-        min_slope = (xD-inty)/(xD-intx)
-        R_min = min_slope/(1-min_slope)
-        print(f"R_min = {R_min}")
-        if R == None and factor != None:
-            R = factor*R_min
+    #From Fenske equation (at total reflux)
+    N_min = int(np.ceil(sp.log((xD*(1-xB))/((1-xD)*xB))/sp.log(a)))
+    print(f"N_min = {N_min} ({N_min-1} stages + reboiler)")
     
-    #real number of stages (stepping starting from the top of the column, with (x0,y1) being (xD,xD))
+    #min reflux occurs when top op. line intersects the eq. line, so find slope of this theoretical top op line using q-line
+    if q != 1:
+        soln_set2 = sp.solveset((a*x)/(1+(a-1)*x)-q/(q-1)*x+z/(q-1),x) #make q-line and eq. line equal to find intersection x, then y
+        for soln in soln_set2:
+            intx = soln
+            inty = a*intx/(1+(a-1)*intx)
+            if 0 <= intx <= 1 and 0 <= inty <= 1:
+                break
+    else: #q=1 -> q-line is x=z
+        intx = z
+        inty = a*z/(1+(a-1)*z)
+    min_slope = (xD-inty)/(xD-intx)
+    R_min = min_slope/(1-min_slope)
+    print(f"R_min = {R_min}")
+    if R == None and Rmin_factor != None:
+        R = float(Rmin_factor*R_min)
+    
+    #if we didn't already have R, solve for missing variables
+    if R!=None and D!=None and L==None:
+        L=R*D
+        if V==None:
+            V=L+D
+    if Lp==None and q!=None and F!=None and L!=None:
+        Lp=q*F+L
+    if Vp==None and B!=None and Lp!=None:
+        Vp=Lp-B
+    
+    #real number of stages (stepping starting from the top of the column, with (x0,y1) being (xD,xD))    
     print("[i, x_i, y_i+1]")
-    i = 0
-    x_i = xD
-    # start at (X_0, Y_1) on op. line, then keep stepping down until (X_N, Y_N+1) on op. line
-    y_iplus1 = xD
-    while x_i > xB:
+    if EMV==None and EML==None:
+        plot_xs = [xD]
+        plot_ys = [xD]
+        i = 0
+        x_i = xD
+        # start at (xD,xD) on top op. line, then keep stepping down until (xB,xB) on bottom op. line
+        y_iplus1 = xD
+        while x_i > xB:
+            current_row = [i, x_i, y_iplus1]
+            print(current_row)
+            i += 1
+            # equilibrium line (to get x_i of the new (current) i)
+            soln_set = sp.solveset((a*x)/(1+(a-1)*x)-y_iplus1,x)
+            for soln in soln_set:
+                x_i = float(soln)
+            plot_xs.append(x_i)
+            # operating line (to get y_i+1) - step to op. line with the lower value (before intersection, bottom is higher than top, so step on top; after intersection, bottom is lower than top, so step on bottom)
+            y_iplus1 = min(R/(R+1)*x_i+xD/(R+1),Lp/Vp*x_i+(1-Lp/Vp)*xB)
+            plot_ys.append(y_iplus1)
+    elif EML!=None:
+        plot_xs = [xD]
+        plot_ys = [xD]
+        i = 0
+        x_i = xD
+        # start at (xD,xD) on top op. line, then keep stepping down until (xB,xB) on bottom op. line
+        y_iplus1 = xD
+        while x_i > xB:
+            current_row = [i, x_i, y_iplus1]
+            print(current_row)
+            i += 1
+            # equilibrium line (to get x_i of the new (current) i)
+            soln_set = sp.solveset((a*x)/(1+(a-1)*x)-y_iplus1,x)
+            for soln in soln_set:
+                x_i_eq = float(soln)
+            x_i = EML*(x_i_eq - plot_xs[i-1]) + plot_xs[i-1] #step EML% of the way to the left
+            plot_xs.append(x_i)
+            # operating line (to get y_i+1) - step to op. line with the lower value (before intersection, bottom is higher than top, so step on top; after intersection, bottom is lower than top, so step on bottom)
+            y_iplus1 = min(R/(R+1)*x_i+xD/(R+1),Lp/Vp*x_i+(1-Lp/Vp)*xB)
+            plot_ys.append(y_iplus1)
+    elif EMV!=None:
+        plot_xs = [xB]
+        plot_ys = [xB]
+        i = 0
+        x_i = xB
+        # start at (X_0, Y_1) on op. line, then keep stepping down until (X_N, Y_N+1) on op. line
+        y_iplus1 = xB
         current_row = [i, x_i, y_iplus1]
         print(current_row)
-        i += 1
-        # equilibrium line (to get x_i of the new (current) i)
-        soln_set = sp.solveset((a*x)/(1+(a-1)*x)-y_iplus1,x)
-        for soln in soln_set:
-            x_i = soln
-        # operating line (to get y_i+1) - step to op. line with the lower value (before intersection, bottom is higher than top, so step on top; after intersection, bottom is lower than top, so step on bottom)
-        y_iplus1 = min(R/(R+1)*x_i+xD/(R+1),Lp/Vp*x_i+(1-Lp/Vp)*xB)
-    current_row = [i, x_i, y_iplus1]
-    print(current_row)
+        while x_i < xD:
+            i += 1
+            y_eq = a*x_i/(1+(a-1)*x_i)
+            y_iplus1 = EMV*(y_eq-plot_ys[i-1]) + plot_ys[i-1]
+            plot_ys.append(y_iplus1)
+            soln_set = sp.solveset(y_iplus1-(Lp/Vp*x+(1-Lp/Vp)*xB),x) #bottom
+            for soln in soln_set:
+                x1 = float(soln)
+            soln_set2 = sp.solveset(y_iplus1-(R/(R+1)*x+xD/(R+1)),x) #top
+            for soln in soln_set2:
+                x2 = float(soln)
+            x_i = max(x1,x2)
+            plot_xs.append(x_i)
+            current_row = [i, x_i, y_iplus1]
+            print(current_row)
+    if (EMV == None and EML == None) or (EML != None):
+        current_row = [i, x_i, y_iplus1]
+        print(current_row)
     print(f"N = {i} stages")
+    
+    #plot
+    op_line_x = np.linspace(0,1,100)
+    top_op_line_y = R/(R+1)*op_line_x + xD/(R+1)
+    bottom_op_line_y = Lp/Vp*op_line_x + (1-Lp/Vp)*xB
+    eq_line_y = (a*op_line_x)/(1+(a-1)*op_line_x)
+    q_line_x = np.linspace(0,z,100) if q!=1 else np.array([z]*100)
+    q_line_y = q/(q-1)*q_line_x - z/(q-1) if q!=1 else np.linspace(z,1,100)
+    plt.plot(op_line_x,top_op_line_y,color="blue",label="Top Op. Line")
+    plt.plot(op_line_x,eq_line_y,color="orange",label="Eq. Line")
+    plt.plot(op_line_x,bottom_op_line_y,color="brown",label="Bottom Op. Line")
+    plt.plot(q_line_x,q_line_y,color="purple",label="q-line")
+    plt.scatter(plot_xs,plot_ys,color="black")
+    plt.scatter(xD,xD,color="red",label="(xD,xD)")
+    plt.scatter(xB,xB,color="red",label="(xB,xB)")
+    plt.scatter(z,z,color="green",label="(z,z)")
+    j=0
+    while j < i:
+        if (EMV == None and EML == None) or (EML != None): #step from the top down
+            plt.plot(plot_xs[j:j+2],[plot_ys[j],plot_ys[j]],color="grey", label="Stepping" if j==0 else "_nolegend_")
+            plt.text(sum(plot_xs[j:j+2])/2, sum([plot_ys[j],plot_ys[j]])/2, str(j+1) if j!=i-1 else "R", ha="center", va="bottom")
+            plt.plot([plot_xs[j+1],plot_xs[j+1]],plot_ys[j:j+2],color="grey")
+            j += 1
+        elif EMV != None: #step from the bottom up
+            plt.plot([plot_xs[j],plot_xs[j]],plot_ys[j:j+2],color="grey", label="Stepping" if j==0 else "_nolegend_")
+            plt.text(sum(plot_xs[j:j+2])/2, sum([plot_ys[j+1],plot_ys[j+1]])/2, "R" if j==0 else str(i-j), ha="center", va="bottom")
+            plt.plot(plot_xs[j:j+2],[plot_ys[j+1],plot_ys[j+1]],color="grey")
+            j += 1
+    plt.xlim(0,min(1,max(plot_xs)*1.1))
+    plt.ylim(0,min(1,max(plot_ys)*1.1))
+    plt.title("McCabe-Thiele Stepping")
+    plt.legend(loc="best")
+    plt.show()
 
 def column_diameter(WL, pL, WV, pV, sigma, Q, f, n, spacing):
     '''
