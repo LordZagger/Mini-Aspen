@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import io, sys
 import sympy as sp
 import base64
+import matplotlib.pyplot as plt
 
 app = FastAPI(title="Mini-Aspen")
 
@@ -266,4 +267,30 @@ def fugk_endpoint(data: FUGKInput):
         data.feed_tray
     )
 
-    return {"result": make_json_safe(result)}
+    response = {
+        "result": make_json_safe(result)
+    }
+
+    if data.mccabe_thiele:
+        graphs = []
+
+        for figure_number in plt.get_fignums():
+            figure = plt.figure(figure_number)
+
+            buffer = io.BytesIO()
+            figure.savefig(
+                buffer,
+                format="png",
+                bbox_inches="tight"
+            )
+            buffer.seek(0)
+
+            graphs.append(
+                base64.b64encode(buffer.getvalue()).decode("utf-8")
+            )
+
+        plt.close("all")
+
+        response["graphs"] = graphs
+
+    return response
