@@ -24,7 +24,6 @@ inf = sp.S.Infinity #simpler to write, positive infinity
 
 def washing_mccabe_thiele(U, O, x_out, x_in, yNplus1=0):
     '''
-    Warning: this is for countercurrent flow!
     U - underflow liquid's mass flow rate
     O - overflow liquid's mass flow rate
     x_out - xN, desired purity
@@ -33,8 +32,7 @@ def washing_mccabe_thiele(U, O, x_out, x_in, yNplus1=0):
  
     Prints a table of mass fractions at each stage, using the algebraic method to calculate all mass fractions
     And prints required number of stages to achieve desired purity
-    Then presents a McCabe-Thiele stepping graph corresponding to the printed table
-    Please use floats for inputs!
+    Please use floats for inputs
     '''
     plot_xs = [x_in]
     plot_ys = []
@@ -63,9 +61,8 @@ def washing_mccabe_thiele(U, O, x_out, x_in, yNplus1=0):
     plt.scatter(x_out, yNplus1, color="red", label="(xN, yN+1)")
     j = 0
     while j < i:
-        #horizontal line, then vertical line
         plt.plot(plot_xs[j:j+2],[plot_ys[j],plot_ys[j]],color="grey", label="Stepping" if j==0 else "_nolegend_")
-        plt.text(sum(plot_xs[j:j+2])/2, sum([plot_ys[j],plot_ys[j]])/2, str(j+1), ha="center", va="bottom") #step number label
+        plt.text(sum(plot_xs[j:j+2])/2, sum([plot_ys[j],plot_ys[j]])/2, str(j+1), ha="center", va="bottom")
         plt.plot([plot_xs[j+1],plot_xs[j+1]],plot_ys[j:j+2],color="grey")
         j += 1
     plt.xlim(0,x_in*1.1)
@@ -197,7 +194,6 @@ def absorption_stripping_single_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsS
         percent_recovery = (X_in-X_out)/X_in * 100
         return (x_out, y_out, L_out, V_out, percent_recovery)
 
-
 def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsStrip, x_out=None, y_out=None):
     '''
     L - molar flowrate of liquid (typically pure if absorption)
@@ -223,6 +219,9 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
     lines, thus the equations can now be made equal to each other
     For dilutes, also uses Kremser to confirm answer or give a hint
     '''
+    plot_xs = []
+    plot_ys = []
+    
     if AbsStrip == True and dilute == True:
         L = L_in
         V = V_in
@@ -234,16 +233,20 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
         print("[n, x_n, y_n+1]")
         n = 0
         x_n = x_in
+        plot_xs.append(x_in)
         # start at (x0, y1) on op. line, then keep stepping up until (xN, yN+1) on op. line
         y_nplus1 = y_out
+        plot_ys.append(y_out)
         while y_nplus1 < y_in:
             current_row = [n, x_n, y_nplus1]
             print(current_row)
             n += 1
             # equilibrium line (to get x_n of the new (current) n)
             x_n = y_nplus1/K
+            plot_xs.append(x_n)
             # operating line (to get y_n+1)
             y_nplus1 = L/V*x_n + y_out - L/V*x_in
+            plot_ys.append(y_nplus1)
         current_row = [n, x_n, y_nplus1]
         print(current_row)
         print(f"N = {n} stages")
@@ -263,11 +266,15 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
         print(f"Kremser yields {N} stages.")
         
         #realize that for L_min, y_N+1=(L/V)*(x_N-x_0)=K*x_N
-        x_out = y_in/K
+        x_out2 = y_in/K
         #slope_min -> L_min/V
-        slope_min = (y_in-y_out)/(x_out-x_in)
+        slope_min = (y_in-y_out)/(x_out2-x_in)
         Lp_min = slope_min*V
         print(f"L_min = {Lp_min}")
+        
+        op_line_x = np.linspace(0,1,100)
+        op_line_y = L/V*(op_line_x-x_in)+y_out
+        eq_line_y = K*op_line_x
 
     elif AbsStrip == True and dilute == False:
         Y_in = y_in/(1-y_in)
@@ -282,8 +289,10 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
         print("[n, X_n, Y_n+1]")
         n = 0
         X_n = X_in
+        plot_xs.append(X_in)
         # start at (X_0, Y_1) on op. line, then keep stepping up until (X_N, Y_N+1) on op. line
         Y_nplus1 = Y_out
+        plot_ys.append(Y_out)
         while Y_nplus1 < Y_in:
             current_row = [n, X_n, Y_nplus1]
             print(current_row)
@@ -292,8 +301,10 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
             soln_set = sp.solveset((K*x)/(1+(1-K)*x)-Y_nplus1,x)
             for soln in soln_set:
                 X_n = soln
+            plot_xs.append(X_n)
             # operating line (to get Y_n+1)
             Y_nplus1 = (Lp/Vp)*X_n + Y_out - (Lp/Vp)*X_in
+            plot_ys.append(Y_nplus1)
         current_row = [n, X_n, Y_nplus1]
         print(current_row)
         print(f"N = {n} stages")
@@ -301,11 +312,18 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
         #realize that for L_min, Y_N+1=(K*X_N)/(1+X_N*(1-K))        
         soln_set2 = sp.solveset((K*x)/(1+x*(1-K))-Y_in,x)
         for soln in soln_set2:
-            X_out = soln
+            X_out2 = soln
         #slope_min -> L'min/V'
-        slope_min = (Y_in-Y_out)/(X_out-X_in)
+        slope_min = (Y_in-Y_out)/(X_out2-X_in)
         Lp_min = slope_min*Vp
         print(f"L'_min = {Lp_min}")
+        
+        soln_set3 = sp.solveset(Y_in-Y_out-Lp/Vp*(x-X_in),x)
+        for soln in soln_set3:
+            X_out = soln
+        op_line_x = np.linspace(0,max(plot_xs)*1.1,100)
+        op_line_y = Lp/Vp*(op_line_x-X_in)+Y_out
+        eq_line_y = (K*op_line_x)/(1+op_line_x*(1-K))
 
     elif AbsStrip == False and dilute == True:
         L = L_in
@@ -313,23 +331,27 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
         K = H/P
         soln_set = sp.solveset(L*x_in+V*y_in-L*x_out-V*y,y)
         for soln in soln_set:
-            y_out = soln
+            y_out = float(soln)
 
         # operating line: y_n+1 = (L/V)*x_n + y_1 - (L/V)*x_0
         # equilibrium line: y_n = K*x_n
         print("[n, x_n, y_n+1]")
         n = 0
         x_n = x_in
+        plot_xs.append(x_in)
         # start at (x0, y1) on op. line, then keep stepping down until (xN, yN+1) on op. line
         y_nplus1 = y_out
+        plot_ys.append(y_out)
         while x_n > x_out:
             current_row = [n, x_n, y_nplus1]
             print(current_row)
             n += 1
             # equilibrium line (to get x_n of the new (current) n)
             x_n = y_nplus1/K
+            plot_xs.append(x_n)
             # operating line (to get y_n+1)
             y_nplus1 = L/V*x_n + y_out - L/V*x_in
+            plot_ys.append(y_nplus1)
         current_row = [n, x_n, y_nplus1]
         print(current_row)
         print(f"N = {n} stages")
@@ -350,6 +372,10 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
         slope = (y_1-y_in)/(x_in-x_out) #L/V
         V_min = L/slope
         print(f"V_min = {V_min}")
+        
+        op_line_x = np.linspace(0,1,100)
+        op_line_y = L/V*(op_line_x-x_in)+y_out
+        eq_line_y = K*op_line_x
 
     elif AbsStrip == False and dilute == False:
         Y_in = y_in/(1-y_in)
@@ -360,15 +386,17 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
         Vp = V_in*(1-y_in)
         soln_set2 = sp.solveset(Lp*X_in+Vp*Y_in-Lp*X_out-Vp*y,y)
         for soln in soln_set2:
-            Y_out = soln
+            Y_out = float(soln)
 
         # operating line: Y_n+1 = (L'/V')*X_n + Y_1 - (L'/V')*X_0
         # equilibrium line: Y_n = (K*X_n)/(1+(1-K)*X_n)
         print("[n, X_n, Y_n+1]")
         n = 0
         X_n = X_in
+        plot_xs.append(X_in)
         # start at (X_0, Y_1) on op. line, then keep stepping down until (X_N, Y_N+1) on op. line
         Y_nplus1 = Y_out
+        plot_ys.append(Y_out)
         while X_n > X_out:
             current_row = [n, X_n, Y_nplus1]
             print(current_row)
@@ -376,9 +404,11 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
             # equilibrium line (to get X_n of the new (current) n)
             soln_set = sp.solveset((K*x)/(1+(1-K)*x)-Y_nplus1,x)
             for soln in soln_set:
-                X_n = soln
+                X_n = float(soln)
+            plot_xs.append(X_n)
             # operating line (to get Y_n+1)
             Y_nplus1 = (Lp/Vp)*X_n + Y_out - (Lp/Vp)*X_in
+            plot_ys.append(Y_nplus1)
         current_row = [n, X_n, Y_nplus1]
         print(current_row)
         print(f"N = {n} stages")
@@ -388,6 +418,36 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
         slope = (Y_1-Y_in)/(X_in-X_out) #L'/V'
         Vp_min = Lp/slope
         print(f"V'_min = {Vp_min}")
+        
+        op_line_x = np.linspace(0,max(plot_xs)*1.1,100)
+        op_line_y = Lp/Vp*(op_line_x-X_in)+Y_out
+        eq_line_y = (K*op_line_x)/(1+op_line_x*(1-K))
+    
+    #plot
+    plt.plot(op_line_x, op_line_y, color="blue", label="Operating Line")
+    plt.plot(op_line_x, eq_line_y, color="orange", label="Equilibrium Line")
+    plt.scatter(plot_xs,plot_ys, color="black")
+    if dilute == True:
+        plt.scatter(x_in,y_out,color="red",label="(x0,y1)")
+        plt.scatter(x_out,y_in,color="red",label="(xN,yN+1)")
+        plt.xlabel("x")
+        plt.ylabel("y")
+    else:
+        plt.scatter(X_in,Y_out,color="red",label="(X0,Y1)")
+        plt.scatter(X_out,Y_in,color="red",label="(XN,YN+1)")
+        plt.xlabel("X")
+        plt.ylabel("Y")
+    j = 0
+    while j < n:
+        plt.plot(plot_xs[j:j+2],[plot_ys[j],plot_ys[j]],color="grey", label="Stepping" if j==0 else "_nolegend_")
+        plt.text(sum(plot_xs[j:j+2])/2, sum([plot_ys[j],plot_ys[j]])/2, str(j+1), ha="center", va="bottom")
+        plt.plot([plot_xs[j+1],plot_xs[j+1]],plot_ys[j:j+2],color="grey")
+        j += 1
+    plt.xlim(0,max(plot_xs)*1.1)
+    plt.ylim(0,max(plot_ys)*1.1)
+    plt.title("McCabe-Thiele Stepping")
+    plt.legend(loc="upper left")
+    plt.show()
 
 def binary_flash_drum_sizing(p_a, p_b, MW_a, MW_b, L, V, x_a, y_a, P, T):
     '''
