@@ -301,7 +301,7 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
             # equilibrium line (to get X_n of the new (current) n)
             soln_set = sp.solveset((K*x)/(1+(1-K)*x)-Y_nplus1,x)
             for soln in soln_set:
-                X_n = soln
+                X_n = float(soln)
             plot_xs.append(X_n)
             # operating line (to get Y_n+1)
             Y_nplus1 = (Lp/Vp)*X_n + Y_out - (Lp/Vp)*X_in
