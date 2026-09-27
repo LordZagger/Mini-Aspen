@@ -280,6 +280,18 @@
   <input id="q_fugk" placeholder="q (feed quality)">
   <input id="R_fugk" placeholder="R (optional)">
   <input id="factor_fugk" placeholder="factor (optional, multiplies Rmin)">
+  <label style="display:block; margin-top:10px;">
+    <input type="checkbox" id="mccabe_fugk">
+    Perform McCabe–Thiele stepping
+  </label>
+
+  <input
+      id="feed_tray_fugk"
+      placeholder="feed tray (required for McCabe–Thiele)"
+      type="number"
+      min="1"
+      step="1"
+  >
 
   <h3>Components</h3>
   <table id="fugk_table" style="width:100%; border-collapse: collapse;">
@@ -520,6 +532,8 @@ async function runFUGK() {
     q: parseFloat(q_fugk.value) || 0,
     R: parseFloat(R_fugk.value) || null,
     factor: parseFloat(factor_fugk.value) || null
+    mccabe_thiele: mccabe_fugk.checked,
+    feed_tray: feed_tray_fugk.value ? parseInt(feed_tray_fugk.value) : null
   };
 
   const result = await post("https://mini-aspen-backend.onrender.com/fugk", data);
