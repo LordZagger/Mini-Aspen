@@ -218,6 +218,7 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
     Calculates Lmin, L'min, Vmin or V'min using the fact that at minimum, eq. line and op. line intersect, thus there is the same point on both
     lines, thus the equations can now be made equal to each other
     For dilutes, also uses Kremser to confirm answer or give a hint
+    Finally, presents a McCabe-Thiele stepping graph corresponding to the table
     '''
     plot_xs = []
     plot_ys = []
