@@ -6,5 +6,3 @@ pydantic
 scipy
 pandas
 matplotlib
-io
-base64
