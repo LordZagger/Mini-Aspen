@@ -200,6 +200,7 @@
   <button onclick="runMulti()">Run</button>
 
   <pre id="multi_output"></pre>
+  <img id="abs_strip_multi_graph" style="display: none; max-width: 100%;">
 </div>
 
 <!-- Flash Drum -->
@@ -387,8 +388,15 @@ async function runMulti() {
     x_out: x_out_m.value ? parseFloat(x_out_m.value) : null,
     y_out: y_out_m.value ? parseFloat(y_out_m.value) : null
   };
+
   const result = await post("https://mini-aspen-backend.onrender.com/abs_strip_multi", data);
+
+  // Display the table output
   multi_output.textContent = result.output;
+
+  // Display the graph underneath the table
+  abs_strip_multi_graph.src = "data:image/png;base64," + result.graph;
+  abs_strip_multi_graph.style.display = "block";
 }
 
 async function runFlash() {
