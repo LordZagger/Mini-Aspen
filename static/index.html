@@ -390,10 +390,8 @@ async function runMulti() {
   };
 
   const result = await post("https://mini-aspen-backend.onrender.com/abs_strip_multi", data);
-
   // Display the table output
   multi_output.textContent = result.output;
-
   // Display the graph underneath the table
   abs_strip_multi_graph.src = "data:image/png;base64," + result.graph;
   abs_strip_multi_graph.style.display = "block";
