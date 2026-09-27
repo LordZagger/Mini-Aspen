@@ -128,13 +128,19 @@ class AbsStripMultiInput(BaseModel):
 
 @app.post("/abs_strip_multi")
 def abs_strip_multi_endpoint(data: AbsStripMultiInput):
-    output = capture_output(
+    output, graph_bytes = capture_output(
         Zmodule260908.absorption_stripping_multi_stage,
         data.L_in, data.V_in, data.x_in, data.y_in,
         data.P, data.H, data.dilute, data.AbsStrip,
         data.x_out, data.y_out
     )
-    return {"output": output}
+
+    graph_b64 = base64.b64encode(graph_bytes).decode("utf-8")
+
+    return {
+        "output": output,
+        "graph": graph_b64
+    }
 
 
 # -----------------------------
