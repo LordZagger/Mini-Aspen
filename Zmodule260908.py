@@ -447,7 +447,12 @@ def absorption_stripping_multi_stage(L_in, V_in, x_in, y_in, P, H, dilute, AbsSt
     plt.ylim(0,max(plot_ys)*1.1)
     plt.title("McCabe-Thiele Stepping")
     plt.legend(loc="upper left")
-    plt.show()
+    
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format="png", bbox_inches="tight")
+    plt.close()
+    img_buffer.seek(0)
+    return img_buffer.getvalue()
 
 def binary_flash_drum_sizing(p_a, p_b, MW_a, MW_b, L, V, x_a, y_a, P, T):
     '''
