@@ -245,19 +245,25 @@ def column_diameter_endpoint(data: ColumnDiameterInput):
 # -----------------------------
 class FUGKInput(BaseModel):
     components: dict
-    F: float = 1
+    F: float
     q: float
     R: float | None = None
     factor: float | None = None
+    mccabe_thiele: bool = False
+    feed_tray: int | None = None
 
 @app.post("/fugk")
 def fugk_endpoint(data: FUGKInput):
     from Zmodule260908 import FUGK
+
     result = FUGK(
         data.components,
         data.F,
         data.q,
         data.R,
-        data.factor
+        data.factor,
+        data.mccabe_thiele,
+        data.feed_tray
     )
+
     return {"result": make_json_safe(result)}
