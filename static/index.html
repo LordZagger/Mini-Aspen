@@ -146,6 +146,7 @@
   <button class="tab" onclick="showSection('column')">Column</button>
   <button class="tab" onclick="showSection('fugk')">FUGK</button>
   <button class="tab" onclick="showSection('batch_distill')">Batch Distillation</button>
+  <button class="tab" onclick="showSection('multicomp_flash')">Multi Flash</button>
 </div>
 
 <!-- Washing Section -->
@@ -337,7 +338,39 @@
 
   <div id="batch_distill_graphs"></div>
 </div>
-  
+
+<!-- Multicomponent Flash Distillation -->
+<div id="multicomp_flash" class="panel">
+  <h2>Multicomponent Flash Distillation</h2>
+  <pre id="multicomp_flash_doc"></pre>
+
+  <h3>Global Inputs</h3>
+
+  <input id="mcf_T" placeholder="T (K)">
+  <input id="mcf_P" placeholder="P">
+  <input id="mcf_F" placeholder="F (optional)">
+
+  <h3>Components</h3>
+
+  <table id="mcf_table" style="width:100%; border-collapse: collapse;">
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>z_i</th>
+        <th>Pi_sat</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+
+    <tbody id="mcf_body"></tbody>
+  </table>
+
+  <button onclick="addMCFRow()">Add Component</button>
+  <button onclick="runMulticompFlash()">Run</button>
+
+  <pre id="multicomp_flash_output"></pre>
+</div>
+
 <script>
 function showSection(id) {
   document.querySelectorAll('.panel').forEach(s => {
@@ -370,7 +403,8 @@ async function loadDocs() {
     distill_doc: "/docs/distillation",
     column_doc: "/docs/column",
     fugk_doc: "/docs/fugk",
-    batch_distill_doc: "/docs/batch_distillation"
+    batch_distill_doc: "/docs/batch_distillation",
+    multicomp_flash_doc: "/docs/multicomp_flash"
   };
 
   for (const [id, url] of Object.entries(endpoints)) {
@@ -622,6 +656,53 @@ async function runBatchDistill() {
   }
 }
 
+function addMCFRow() {
+  const row = document.createElement("tr");
+
+  row.innerHTML = `
+    <td><input name="name" placeholder="Name"></td>
+    <td><input name="zi" placeholder="z_i"></td>
+    <td><input name="Pi_sat" placeholder="Pi_sat"></td>
+    <td><button class="delete-row">✖</button></td>
+  `;
+
+  row.querySelector(".delete-row").onclick = () => row.remove();
+
+  mcf_body.appendChild(row);
+}
+
+async function runMulticompFlash() {
+  const rows = mcf_body.querySelectorAll("tr");
+  const components = {};
+
+  rows.forEach(row => {
+    const cells = row.querySelectorAll("input");
+
+    const name = cells[0].value.trim();
+
+    if (!name) return;
+
+    components[name] = {
+      zi: parseFloat(cells[1].value),
+      Pi_sat: parseFloat(cells[2].value)
+    };
+  });
+
+  const data = {
+    components,
+    T: parseFloat(mcf_T.value),
+    P: parseFloat(mcf_P.value),
+    F: mcf_F.value ? parseFloat(mcf_F.value) : null
+  };
+
+  const result = await post(
+    "https://mini-aspen-backend.onrender.com/multicomp_flash",
+    data
+  );
+
+  multicomp_flash_output.textContent = result.output;
+}
+  
 </script>
 
 </div>
