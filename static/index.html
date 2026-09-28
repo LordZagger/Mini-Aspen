@@ -145,6 +145,7 @@
   <button class="tab" onclick="showSection('distill')">Distillation</button>
   <button class="tab" onclick="showSection('column')">Column</button>
   <button class="tab" onclick="showSection('fugk')">FUGK</button>
+  <button class="tab" onclick="showSection('batch_distill')">Batch Distillation</button>
 </div>
 
 <!-- Washing Section -->
@@ -316,6 +317,27 @@
   <div id="fugk_graphs"></div>
 </div>
 
+<!-- Batch Distillation -->
+<div id="batch_distill" class="panel">
+  <h2>Batch Distillation (Rayleigh)</h2>
+  <pre id="batch_distill_doc"></pre>
+
+  <input id="batch_F" placeholder="F (initial charge, optional)">
+  <input id="batch_xF" placeholder="xF (feed composition)">
+  <input id="batch_alpha" placeholder="alpha">
+
+  <input
+      id="batch_boilup"
+      placeholder="Boilup rate (optional)"
+  >
+
+  <button onclick="runBatchDistill()">Run</button>
+
+  <pre id="batch_distill_output"></pre>
+
+  <div id="batch_distill_graphs"></div>
+</div>
+  
 <script>
 function showSection(id) {
   document.querySelectorAll('.panel').forEach(s => {
@@ -347,7 +369,8 @@ async function loadDocs() {
     flash_doc: "/docs/flash",
     distill_doc: "/docs/distillation",
     column_doc: "/docs/column",
-    fugk_doc: "/docs/fugk"
+    fugk_doc: "/docs/fugk",
+    batch_distill_doc: "/docs/batch_distillation"
   };
 
   for (const [id, url] of Object.entries(endpoints)) {
@@ -555,6 +578,47 @@ async function runFUGK() {
   
           fugkGraphs.appendChild(img);
       });
+  }
+}
+
+async function runBatchDistill() {
+  const data = {
+    F: batch_F.value ? parseFloat(batch_F.value) : 1,
+    xF: parseFloat(batch_xF.value),
+    alpha: parseFloat(batch_alpha.value),
+    boilup_rate: batch_boilup.value
+      ? parseFloat(batch_boilup.value)
+      : null
+  };
+
+  const result = await post(
+    "https://mini-aspen-backend.onrender.com/batch_distillation",
+    data
+  );
+
+  // Display the dataframe
+  batch_distill_output.textContent = result.output;
+
+  // Clear previous graphs
+  const batchGraphs = document.getElementById(
+    "batch_distill_graphs"
+  );
+
+  batchGraphs.innerHTML = "";
+
+  // Display graph(s), if boilup rate was provided
+  if (result.graphs) {
+    result.graphs.forEach(graph => {
+      const img = document.createElement("img");
+
+      img.src = "data:image/png;base64," + graph;
+
+      img.style.maxWidth = "100%";
+      img.style.display = "block";
+      img.style.marginTop = "20px";
+
+      batchGraphs.appendChild(img);
+    });
   }
 }
 
