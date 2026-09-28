@@ -11,4 +11,4 @@ The functions operate on a Render website built with FastAPI, HTML/CSS and Javas
 
 2026-09-28 update: (Simple) Batch Distillation!
 
-Next update: LLE and flash distillation...
+Next update: Multicomponent Flash Distillation! (using Rachford-Rice)
