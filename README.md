@@ -1,7 +1,7 @@
 # Mini-Aspen
 Compilation of process simulation functions made in Python, inspired by problem-solving techniques learned while taking CHE200 in Winter 2026.
 
-Currently contains: washing, absorption/stripping, binary distillation, multicomponent distillation and flash drum/distillation column sizing.
+Currently contains: washing, absorption/stripping, binary distillation, multicomponent distillation, (simple) batch distillation, multicomponent flash distillation, flash drum sizing and distillation column sizing.
 
 The functions operate on a Render website built with FastAPI, HTML/CSS and Javascript: https://mini-aspen-frontend.onrender.com
 
@@ -9,6 +9,6 @@ The functions operate on a Render website built with FastAPI, HTML/CSS and Javas
 
 2026-09-27 update: McCabe-Thiele stepping graphs for multi-stage processes (Washing, Absorption/Stripping, Distillation), Murphree efficiency for binary distillation
 
-2026-09-28 update: (Simple) Batch Distillation!
+2026-09-28 update: Batch Distillation and Multicomponent Flash Distillation!
 
-Next update: Multicomponent Flash Distillation! (using Rachford-Rice)
+Next update: LLE and binary flash distillation?
