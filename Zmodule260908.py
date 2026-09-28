@@ -518,7 +518,7 @@ def binary_distillation_mccabe_thiele(xD,xB,a,z,F=1,R=None,q=None,D=None,B=None,
     Equilibrium line (Raoult's): y=a*x/(1+(a-1)*x)
                       
     (Only works for problems where a constant alpha is given)
-    (if no alpha is given, you could hypothetically approximate it if a line of the form y=a*x/(1+(a-1)*x) is fitted through equilibrium data)
+    (if no alpha is given, you could approximate it if a line of the form y=a*x/(1+(a-1)*x) is fitted through equilibrium data, but the results may not be accurate)
     '''
     #Calculating as much process data as possible from given arguments
     if F==None and D!=None and B!=None:
