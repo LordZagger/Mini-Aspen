@@ -1042,6 +1042,48 @@ def batch_distillation(F, xF, alpha, boilup_rate=None):
         plt.show()
     print(df)
 
+def multicomp_flash(components,T,P,F=None):
+    """
+    Multicomponent Flash Distillation
+    Given Temperature, pressure and feed composition and vapour pressures, uses the Rachford-Rice equation to determine outlet compositions
+    Please enter T in K, P in the same unit as vapour pressure
+    components: dictionary, where each component's data is also a dictionary (sort of like a pandas dataframe)
+    ex:
+        {'C1': {'zi': 0.25, (feed mole fraction)
+                'Pi_sat': 5}, (pure component vapour pressure at T, with same units as P)
+         'C2': {'zi': 0.25,
+                'Pi_sat': 1},
+         'C3': {'zi': 0.25,
+                'Pi_sat': 0.2}}
+    """
+    df = pd.DataFrame(components).T
+    df["Ki"] = df["Pi_sat"]/P
+    Pbp = sum(df["zi"] * df["Pi_sat"])
+    Pdp = (sum(df["zi"]/df["Pi_sat"]))**(-1)
+    print(f"Bubble point pressure: {Pbp}")
+    print(f"Dew point pressure: {Pdp}")
+    if Pdp < P < Pbp: #separation is possible
+        RR = 0 #rachford rice
+        for component in df.index:
+            RR += ((df.loc[component, "Ki"] - 1)*df.loc[component, "zi"]) / (1+(df.loc[component, "Ki"]-1)*p)
+        soln_set = sp.solveset(RR,p)
+        for soln in soln_set:
+            if 0 <= soln <= 1:
+                phi = float(soln)
+        
+        print(f"V/F: {phi}")
+        if F != None:
+            V = phi*F
+            L = F-V
+            print(f"L: {L}")
+            print(f"V: {V}")
+        df["xi"] = df["zi"] / (1+(df["Ki"]-1)*phi)
+        df["yi"] = (df["zi"]*df["Ki"]) / (1+(df["Ki"]-1)*phi)
+        print("Final components data (outlet compositions are xi and yi for L and V respectively): ")
+        print(df)
+    else:
+        print("Flash separation does not occur in these conditions.")
+
 # testing (if module is not imported)
 if __name__ == '__main__':
     #washing_mccabe_thiele(0.5,1,0.005,0.635)
@@ -1133,4 +1175,14 @@ if __name__ == '__main__':
     #         'key': 'HK'
     #     }
     # }, 1000, 1, R=1.2)) #2 valid phis (system of equations)
-    batch_distillation(75,0.5,2.4,boilup_rate=7.5)
+    #batch_distillation(75,0.5,2.4,boilup_rate=7.5)
+    #multicomp_flash({"cycC6": {"zi": 0.3, "Pi_sat": 3800},
+     #                "EtB": {"zi": 0.3, "Pi_sat": 760},
+      #               "EtcycC6": {"zi": 0.4, "Pi_sat": 152}},393.15,760)
+    multicomp_flash({"1": {"zi": 0.42, "Pi_sat": 195.75},
+                     "2": {"zi": 0.38, "Pi_sat": 97.84},
+                     "3": {"zi": 0.2, "Pi_sat": 50.32}},353.15,110,F=100)
+    #multicomp_flash({"1": {"zi": 0.25, "Pi_sat": 1400},
+     #                "2": {"zi": 0.15, "Pi_sat": 480},
+      #               "3": {"zi": 0.2, "Pi_sat": 160},
+       #              "4": {"zi": 0.4, "Pi_sat": 60}},323.15,200)
