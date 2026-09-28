@@ -9,4 +9,6 @@ The functions operate on a Render website built with FastAPI, HTML/CSS and Javas
 
 2026-09-27 update: McCabe-Thiele stepping graphs for multi-stage processes (Washing, Absorption/Stripping, Distillation), Murphree efficiency for binary distillation
 
-Next update: Batch Distillation! Possibly even LLE and flash distillation...
+2026-09-28 update: (Simple) Batch Distillation!
+
+Next update: LLE and flash distillation...
