@@ -58,6 +58,10 @@ def docs_column():
 def docs_fugk():
     return {"doc": Zmodule260908.FUGK.__doc__}
 
+@app.get("/docs/batch_distillation")
+def docs_batch_distillation():
+    return {"doc": Zmodule260908.batch_distillation.__doc__}
+
 # Utility to capture printed output and function return value
 def capture_output(func, *args, **kwargs):
     buffer = io.StringIO()
@@ -287,6 +291,59 @@ def fugk_endpoint(data: FUGKInput):
 
             graphs.append(
                 base64.b64encode(buffer.getvalue()).decode("utf-8")
+            )
+
+        plt.close("all")
+
+        response["graphs"] = graphs
+
+    return response
+
+# -----------------------------
+# 8. Batch Distillation
+# -----------------------------
+class BatchDistillationInput(BaseModel):
+    F: float = 1
+    xF: float
+    alpha: float
+    boilup_rate: float | None = None
+
+
+@app.post("/batch_distillation")
+def batch_distillation_endpoint(data: BatchDistillationInput):
+
+    output, result = capture_output(
+        Zmodule260908.batch_distillation,
+        data.F,
+        data.xF,
+        data.alpha,
+        data.boilup_rate
+    )
+
+    response = {
+        "output": output
+    }
+
+    if data.boilup_rate is not None:
+        graphs = []
+
+        for figure_number in plt.get_fignums():
+            figure = plt.figure(figure_number)
+
+            buffer = io.BytesIO()
+
+            figure.savefig(
+                buffer,
+                format="png",
+                bbox_inches="tight"
+            )
+
+            buffer.seek(0)
+
+            graphs.append(
+                base64.b64encode(
+                    buffer.getvalue()
+                ).decode("utf-8")
             )
 
         plt.close("all")
