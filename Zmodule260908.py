@@ -731,7 +731,7 @@ def column_diameter(WL, pL, WV, pV, sigma, Q, f, n, spacing):
 def FUGK(components, F, q, R=None, factor=None, mccabe_thiele=False, feed_tray=None):
     '''
     components: dictionary, where each component's data is also a dictionary (sort of like a pandas dataframe)
-    ex:
+    ex: (the UI will make it obvious where to enter each field)
         {'P': {'z_i': 0.25,
                 'fD_i': 0.995,
                 'fB_i': 0.005,
