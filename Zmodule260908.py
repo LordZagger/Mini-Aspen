@@ -1004,6 +1004,44 @@ def FUGK(components, F, q, R=None, factor=None, mccabe_thiele=False, feed_tray=N
         
     return (np.ceil(N),Nf)
 
+def batch_distillation(F, xF, alpha, boilup_rate=None):
+    """
+    Simple Batch distillation simulation using the Rayleigh equation
+    Prints a dataframe of process data at different points in the separation process,
+    And if boilup rate is given, can also produce graphs to show change in compositions over time
+    F - feed amount to the still
+    xF - component mole fraction in the feed
+    W - amount in the still pot
+    xW - mole fraction of component in the still pot
+    y - vapour mole fraction
+    xD,avg - average mole fraction of component in distillate
+    t - time
+    
+    Please enter xF for the more volatile component (the component whose mole fraction in the pot decreases)
+    As the calculations (and graphs) are based on xW decreasing (and constant alpha)
+    Boilup rate must be given as a constant positive number, corresponding to -dW/dt
+    """
+    if F==None:
+        F=1
+    
+    df = pd.DataFrame({"xW(t)": np.arange(xF,0,-0.01)}) #use xW values as the basis for calculating all other variables
+    df["W(t)"] = F*np.exp( 1/(alpha-1) * np.log(df["xW(t)"]/xF*(1-xF)/(1-df["xW(t)"])) + np.log((1-xF)/(1-df["xW(t)"])))
+    df["y(t)"] = alpha*df["xW(t)"]/(1+(alpha-1)*df["xW(t)"])
+    df["xD,avg(t)"] = (xF - df["xW(t)"]*df["W(t)"]/F)/(1 - df["W(t)"]/F)
+    df.loc[0, "xD,avg(t)"] = df.loc[0, "y(t)"] #the xD,avg(0) is nan due to division by zero, but the first drop of distillate should have the same composition as the vapour in equilibrium with the feed
+    if boilup_rate != None:
+        df["t"] = (F - df["W(t)"])/boilup_rate
+        
+        plt.plot(df["t"].values,df["xW(t)"].values,label="Still pot composition")
+        plt.plot(df["t"].values,df["y(t)"].values,label="Vapour composition")
+        plt.plot(df["t"].values,df["xD,avg(t)"].values,label="Average distillate composition")
+        plt.title("Still pot, vapour and distillate composition over time")
+        plt.xlabel("Time")
+        plt.ylabel("Mole fraction")
+        plt.legend(loc="best")
+        plt.show()
+    print(df)
+
 # testing (if module is not imported)
 if __name__ == '__main__':
     #washing_mccabe_thiele(0.5,1,0.005,0.635)
@@ -1012,66 +1050,66 @@ if __name__ == '__main__':
     #print(binary_flash_drum_sizing(0.7914,1,32.04,18.01,736,264,0.2,0.579,1,81.7))
     #binary_distillation_mccabe_thiele(0.9, 0.1, 2.5, 0.4, F=100, R=3, q=0.5, EMV=0.7)
     #print(column_diameter(17500,700,19000,3.5,20,19000/3.5*35.3147,0.8,0.9,24))
-    print(FUGK({
-        'P': {
-            'z_i': 0.25,
-            'fD_i': 0.995,
-            'fB_i': 0.005,
-            'a_i_ref': 13.33,
-            'key': 'LK'
-        },
-        'HX': {
-            'z_i': 0.25,
-            'fD_i': 0.05,
-            'fB_i': 0.95,
-            'a_i_ref': 5.42,
-            'key': 'HK'
-        },
-        'HP': {
-            'z_i': 0.25,
-            'fD_i': 0,
-            'fB_i': 1,
-            'a_i_ref': 2.33,
-            'key': 'HNK'
-        },
-        'O': {
-            'z_i': 0.25,
-            'fD_i': 0,
-            'fB_i': 1,
-            'a_i_ref': 1,
-            'key': 'HNK'
-        }
-    }, 1, 0, R=6,mccabe_thiele=True,feed_tray=10))
-    print(FUGK({
-        'C3': {
-            'z_i': 0.05,
-            'fD_i': 1,
-            'fB_i': 0,
-            'a_i_ref': 5,
-            'key': 'LNK'
-        },
-        'C4': {
-            'z_i': 0.3,
-            'fD_i': 1,
-            'fB_i': 0,
-            'a_i_ref': 2,
-            'key': 'LNK'
-        },
-        'C5': {
-            'z_i': 0.5,
-            'fD_i': 0.95,
-            'fB_i': 0.05,
-            'a_i_ref': 1.5,
-            'key': 'LK'
-        },
-        'C6': {
-            'z_i': 0.15,
-            'fD_i': 0.05,
-            'fB_i': 0.95,
-            'a_i_ref': 1,
-            'key': 'HK'
-        }
-    }, 1000, 0, R=10,mccabe_thiele=True,feed_tray=5))
+    # print(FUGK({
+    #     'P': {
+    #         'z_i': 0.25,
+    #         'fD_i': 0.995,
+    #         'fB_i': 0.005,
+    #         'a_i_ref': 13.33,
+    #         'key': 'LK'
+    #     },
+    #     'HX': {
+    #         'z_i': 0.25,
+    #         'fD_i': 0.05,
+    #         'fB_i': 0.95,
+    #         'a_i_ref': 5.42,
+    #         'key': 'HK'
+    #     },
+    #     'HP': {
+    #         'z_i': 0.25,
+    #         'fD_i': 0,
+    #         'fB_i': 1,
+    #         'a_i_ref': 2.33,
+    #         'key': 'HNK'
+    #     },
+    #     'O': {
+    #         'z_i': 0.25,
+    #         'fD_i': 0,
+    #         'fB_i': 1,
+    #         'a_i_ref': 1,
+    #         'key': 'HNK'
+    #     }
+    # }, 1, 0, R=6,mccabe_thiele=True,feed_tray=10))
+    # print(FUGK({
+    #     'C3': {
+    #         'z_i': 0.05,
+    #         'fD_i': 1,
+    #         'fB_i': 0,
+    #         'a_i_ref': 5,
+    #         'key': 'LNK'
+    #     },
+    #     'C4': {
+    #         'z_i': 0.3,
+    #         'fD_i': 1,
+    #         'fB_i': 0,
+    #         'a_i_ref': 2,
+    #         'key': 'LNK'
+    #     },
+    #     'C5': {
+    #         'z_i': 0.5,
+    #         'fD_i': 0.95,
+    #         'fB_i': 0.05,
+    #         'a_i_ref': 1.5,
+    #         'key': 'LK'
+    #     },
+    #     'C6': {
+    #         'z_i': 0.15,
+    #         'fD_i': 0.05,
+    #         'fB_i': 0.95,
+    #         'a_i_ref': 1,
+    #         'key': 'HK'
+    #     }
+    # }, 1000, 0, R=10,mccabe_thiele=True,feed_tray=5))
     # print(FUGK({
     #     'B': {
     #         'z_i': 0.397,
@@ -1095,3 +1133,4 @@ if __name__ == '__main__':
     #         'key': 'HK'
     #     }
     # }, 1000, 1, R=1.2)) #2 valid phis (system of equations)
+    batch_distillation(75,0.5,2.4,boilup_rate=7.5)
