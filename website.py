@@ -62,6 +62,10 @@ def docs_fugk():
 def docs_batch_distillation():
     return {"doc": Zmodule260908.batch_distillation.__doc__}
 
+@app.get("/docs/multicomp_flash")
+def docs_multicomp_flash():
+    return {"doc": Zmodule260908.multicomp_flash.__doc__}
+
 # Utility to capture printed output and function return value
 def capture_output(func, *args, **kwargs):
     buffer = io.StringIO()
@@ -351,3 +355,26 @@ def batch_distillation_endpoint(data: BatchDistillationInput):
         response["graphs"] = graphs
 
     return response
+
+# -----------------------------
+# 9. Multicomponent Flash
+# -----------------------------
+class MulticompFlashInput(BaseModel):
+    components: dict
+    T: float
+    P: float
+    F: float | None = None
+
+@app.post("/multicomp_flash")
+def multicomp_flash_endpoint(data: MulticompFlashInput):
+    output, result = capture_output(
+        Zmodule260908.multicomp_flash,
+        data.components,
+        data.T,
+        data.P,
+        data.F
+    )
+
+    return {
+        "output": output
+    }
